@@ -1,0 +1,1023 @@
+@import "../styles/theme.css";
+
+:root {
+  --s-font: var(--font-reading);
+  /* Near-opaque app surface (theme.css --color-background at 98%). Auto-flips
+     light/dark with --color-background, so no dark-mode override is needed. */
+  --s-surface: var(--color-background); /* solid: never see-through */
+  /* Accent = app blue; flips automatically via --color-logo-primary. */
+  --s-accent: var(--color-logo-primary);
+  /* The rest come from theme.css, which already follows the theme setting. */
+  --s-accent-soft: color-mix(
+    in srgb,
+    var(--color-logo-primary) 20%,
+    transparent
+  );
+  --s-muted: var(--color-ink-2);
+  --s-faint: var(--color-ink-3);
+  --s-border: var(--color-line);
+  --s-hair: var(--color-wash);
+
+  /* Card geometry — single source of truth for the visible overlay sizes. The
+     native overlay window (overlay.rs) is sized from these: it must be at least
+     the card's max footprint (--ov-work-w for compact, --ov-open-w for Live),
+     since the card is anchored flush to the screen edge in CSS. Keep overlay.rs
+     in sync when these change. */
+  --ov-rest-w: 150px; /* resting compact pill (minimal, recording) -- roomy enough
+                         for the English working label before the grow starts */
+  --ov-pill-w: 160px; /* base width / Live pill before it opens or collapses */
+  --ov-work-w: 112px; /* working pill (transcribing / polishing): just the wordless
+                         animation and the cross; shared by Live (collapsed) + minimal */
+  --ov-chip-w: 228px; /* prompt choice: three buttons */
+  --ov-dots-w: 72px; /* transcribing bar: the three dots with room either side */
+  --ov-open-w: 392px; /* Live panel, expanded */
+  --ov-side-w: 30px; /* each side of the control row: cross (22px) + breathing room; the middle item never enters it */
+  --ov-base-h: 32px; /* control-row height (.sbase) */
+  --ov-cap-max-h: 64px; /* max height of the scrolling live-text region */
+}
+/* ============================================================
+   Unified overlay stage — one fixed, transparent container shared by the compact
+   pill and the Live panel (both render the same `.scard` base). The card is
+   anchored flush to the screen-edge side (bottom by default, top when placed up
+   top) and centered horizontally, so the visible card sits exactly
+   OVERLAY_*_OFFSET from the screen edge regardless of window height — only the
+   offsets in overlay.rs move it. Pops scale from that edge, so the card is never
+   drawn past it (matters for the 4px top offset on Windows/Linux).
+   ============================================================ */
+.ov-stage {
+  /* Appearance settings: size (zoom) and opacity, set from RecordingOverlay.tsx. */
+  zoom: var(--ov-scale, 1);
+  opacity: var(--ov-opacity, 1);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center; /* horizontal centering, kept for both forms */
+  align-items: flex-end; /* bottom placement: flush to the bottom edge */
+  font-family: var(--s-font);
+}
+.ov-stage.top {
+  align-items: flex-start; /* top placement: flush to the top edge */
+}
+
+/* Compact pill: fade the whole container in/out (the pill itself never pops or
+   morphs). */
+.ov-fade {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+.ov-fade.show {
+  opacity: 1;
+}
+
+/* Top placement, Live panel: stack the control pill above the text region so the
+   card grows downward from its top edge (oldest line under the pill, newest at
+   the bottom) — mirroring the bottom overlay's upward flow. The compact pill has
+   no flowing text, so this only affects the Live panel. The text region keeps the
+   same fade + scroll-pin; older lines dissolve up under the pill. */
+.ov-stage.top .scard {
+  /* column-reverse stacks the control pill above the text region. */
+  flex-direction: column-reverse;
+  transform-origin: top center;
+}
+.ov-stage.top .stext-cap {
+  /* Mirror of the bottom overlay (top: 12 / bottom: 0): the first line sits flush
+     under the pill and the breathing room moves below the text. The top fade is
+     off at rest — at zero top padding it would dim the resting first line — and
+     switches on (below) only once text overflows. */
+  padding-top: 0;
+  padding-bottom: 12px;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+/* Once live text overflows, fade older lines up under the pill, matching the
+   bottom overlay's top fade. Gated on `.overflowing` so a short resting line
+   (sitting at the very top) is never dimmed. */
+.ov-stage.top .stext-cap.overflowing {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+}
+.ov-stage.top .stext-cap p {
+  /* Top-anchor short text just under the pill; on overflow the cap still pins to
+     the bottom (newest visible) and older lines fade off the top, same as bottom. */
+  margin: 0;
+}
+
+/* Shared base card. Flat: theme surface + hairline border, no shadow or blur. */
+.scard {
+  width: var(--ov-pill-w);
+  min-width: min-content; /* grows rather than letting the cross touch the middle item */
+  /* Never wider than the window: an unaccounted content zoom degrades to a
+     narrower card instead of clipping. 2px = our border (no border-box reset). */
+  max-width: calc(100vw - 2px);
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: none; /* hold our own width; never let the stage flex shrink the card */
+  transform-origin: bottom center;
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  /* pop-in plays on mount; morph (width/radius) is a transition */
+  animation: scard-pop 460ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    width 460ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 460ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, width, opacity;
+}
+@keyframes scard-pop {
+  from {
+    opacity: 0;
+    /* Scale from the anchored edge (transform-origin) — never translate past it. */
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.scard.leaving {
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 240ms ease,
+    transform 300ms ease;
+}
+.scard.open {
+  width: var(--ov-open-w);
+  border-radius: 16px;
+}
+.scard.working {
+  width: var(--ov-work-w);
+  border-radius: 18px;
+}
+
+/* Compact form: two fixed widths so the recording→working change is an animatable
+   width transition (intrinsic max-content can't be transitioned, and every label
+   is short enough to fit the resting pill, so content-sizing produced no visible
+   grow). The resting pill hugs the waveform; the working pill is roomy enough to
+   hold the wordless working animation and the cross.
+   A notice hugs its title instead, so RecordingOverlay.tsx measures that width and
+   sets it inline, which keeps it animatable. */
+.scard.compact {
+  animation: none;
+  width: var(--ov-rest-w);
+}
+.scard.compact.cworking {
+  /* Only as wide as the animation and the cross: animates in from the rest. */
+  width: var(--ov-work-w);
+}
+
+/* Notice: badge and title, in the pill and the Live panel. */
+.scard.cnotice {
+  cursor: pointer;
+}
+.scard.cnotice:not(.open) {
+  border-radius: 24px;
+}
+.scard.level-error {
+  --notice: var(--color-error);
+}
+.scard.level-warning {
+  --notice: var(--color-warning);
+}
+.sbase.snotice {
+  grid-template-columns: auto minmax(0, max-content);
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+}
+.nglyph {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--notice);
+}
+.nlabel {
+  font-size: 13px;
+  color: var(--color-text);
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Measures the full title, since the visible one can be cut off. */
+.nlabel.nprobe {
+  position: absolute;
+  visibility: hidden;
+  overflow: visible;
+}
+.stext-cap .ndetail {
+  display: block;
+  color: var(--s-muted);
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* text region — auto-height open via grid-rows trick; region fades as a whole */
+.stext {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 440ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 260ms ease;
+}
+.scard.open .stext {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.stext-clip {
+  overflow: hidden;
+  min-height: 0;
+}
+.stext-cap {
+  /* Vertical counterpart of the .scard clamp: show fewer lines rather than clip.
+     20px = cap padding (12) + card borders (2) + 6px slack for zoom rounding. */
+  max-height: min(var(--ov-cap-max-h), calc(100vh - var(--ov-base-h) - 20px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  padding-top: 12px;
+  padding-bottom: 0px;
+  padding-left: 14px;
+  padding-right: 14px;
+  font-size: 15px;
+  font-style: normal;
+  line-height: 1.35;
+  letter-spacing: -0.003em;
+  color: var(--color-text);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+/* Hide the scrollbar (WebKit/Chromium) — scroll-back is signalled by the fade. */
+.stext-cap::-webkit-scrollbar {
+  display: none;
+}
+.stext-cap p {
+  /* Bottom-anchor the text when it's shorter than the viewport, avoiding the
+     justify-content:flex-end overflow bug that makes the top unscrollable. */
+  margin: auto 0 0;
+}
+.stext-cap .tentative {
+  color: inherit;
+}
+.stext-cap .sloading {
+  color: var(--s-muted);
+}
+.scaret {
+  display: inline-block;
+  width: 2px;
+  height: 1.02em;
+  translate: 0 3px;
+  margin-left: 1px;
+  background: var(--s-accent);
+  border-radius: 2px;
+  animation: scaret-blink 1.05s steps(1) infinite;
+}
+@keyframes scaret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* base row — dot (left) | waveform (center) | timer + cancel (right).
+   Same structure for pill & panel; the dot stays anchored left in both. */
+.sbase {
+  position: relative;
+  min-width: min-content; /* never narrower than side + middle + side */
+  height: var(--ov-base-h);
+  flex: none; /* the control row never squashes; only the text region gives */
+  padding: 0 10px;
+  display: grid;
+  /* Equal side columns (min 22px to hold the cancel button) keep the center item
+     — waveform or label — centered whether the pill is at min width or content-
+     sized. */
+  grid-template-columns: minmax(var(--ov-side-w), 1fr) auto minmax(var(--ov-side-w), 1fr);
+  align-items: center;
+}
+/* The dot sits centred in a 22px box, the same size as the cancel button on
+   the right, so both sides mirror and the waveform is exactly centred. */
+.sbase-work .swork {
+  grid-column: 1;
+}
+.sbase-l {
+  display: flex;
+  width: 22px;
+  justify-content: center;
+  align-items: center;
+  justify-self: start;
+}
+.sbase-r {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
+}
+.sdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  box-sizing: border-box;
+  transition:
+    background-color 180ms ease,
+    opacity 180ms ease;
+}
+.sdot.ready {
+  background: var(--s-accent);
+  opacity: 1;
+  animation: sdot-pulse 1.9s infinite;
+}
+/* A quiet neutral dot while the host has not delivered its first sample yet. */
+.sdot.arming {
+  background: var(--s-muted);
+  opacity: 0.45;
+  animation: none;
+}
+@keyframes sdot-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--s-accent-soft);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+.stimer {
+  font-size: 12px;
+  color: var(--s-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 240ms ease 80ms;
+}
+.scard.open {
+  --ov-side-w: 64px; /* timer + cross */
+}
+.scard.open .stimer {
+  opacity: 1;
+}
+
+/* Waveform — reactive only after the first microphone callback. While arming,
+   a muted travelling pulse acknowledges the shortcut without pretending that
+   audio levels are already being received. */
+.swave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  flex: none;
+}
+.swave i {
+  width: 4px;
+  min-height: 3px;
+  max-height: 20px;
+  border-radius: 2px;
+  background: var(--s-accent);
+  transition:
+    height 60ms ease-out,
+    background-color 180ms ease,
+    opacity 180ms ease;
+}
+.swave.arming i {
+  height: 6px !important;
+  background: var(--s-muted);
+  opacity: 0.35;
+  animation: swave-arming 900ms ease-in-out infinite;
+}
+.swave.arming i:nth-child(2),
+.swave.arming i:nth-child(8) {
+  animation-delay: 75ms;
+}
+.swave.arming i:nth-child(3),
+.swave.arming i:nth-child(7) {
+  animation-delay: 150ms;
+}
+.swave.arming i:nth-child(4),
+.swave.arming i:nth-child(6) {
+  animation-delay: 225ms;
+}
+.swave.arming i:nth-child(5) {
+  animation-delay: 300ms;
+}
+@keyframes swave-arming {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scaleY(1.5);
+    opacity: 0.7;
+  }
+}
+.sx {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: none;
+  padding: 0;
+  border: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--s-muted);
+  background: var(--s-hair);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 100ms ease;
+}
+.sx svg {
+  width: 9px;
+  height: 9px;
+  display: block;
+}
+.sx:hover {
+  background: var(--s-accent-soft);
+  color: var(--color-text);
+  transform: scale(1.05);
+}
+.sx:active {
+  transform: scale(0.95);
+}
+
+/* Accent swatches (Settings > Appearance). "default" keeps the app colour. */
+:root[data-accent="terracotta"] {
+  --s-accent: #c0643f;
+}
+:root[data-accent="olive"] {
+  --s-accent: #6f7a3c;
+}
+:root[data-accent="ochre"] {
+  --s-accent: #c48a2c;
+}
+:root[data-accent="clay"] {
+  --s-accent: #9a5b47;
+}
+:root[data-accent="moss"] {
+  --s-accent: #4f6b4a;
+}
+:root[data-accent="sand"] {
+  --s-accent: #b39567;
+}
+:root[data-accent="electric"] {
+  --s-accent: #3d5afe;
+}
+:root[data-accent="coral"] {
+  --s-accent: #ff5a5f;
+}
+:root[data-accent="violet"] {
+  --s-accent: #7c4dff;
+}
+:root[data-accent="tangerine"] {
+  --s-accent: #ff8a1f;
+}
+:root[data-accent="magenta"] {
+  --s-accent: #e83e9a;
+}
+:root[data-accent="aqua"] {
+  --s-accent: #00b8c4;
+}
+:root[data-accent="sage"] {
+  --s-accent: #8fa58c;
+}
+:root[data-accent="rose"] {
+  --s-accent: #c49a9a;
+}
+:root[data-accent="slate"] {
+  --s-accent: #7f93a8;
+}
+:root[data-accent="lilac"] {
+  --s-accent: #9e95b5;
+}
+:root[data-accent="mushroom"] {
+  --s-accent: #a39587;
+}
+:root[data-accent="fogteal"] {
+  --s-accent: #7fa3a0;
+}
+:root[data-accent]:not([data-accent="default"]) {
+  --s-accent-soft: color-mix(in srgb, var(--s-accent) 20%, transparent);
+}
+
+/* Prompt engineer choice: same width as the working bar, three equal
+   buttons that lift slightly on hover; a thin countdown line underneath.
+   Nothing picked = paste as is. */
+.scard.compact.cchip {
+  width: var(--ov-chip-w);
+}
+/* Working pills: the transcribing dots get a roomier 72px bar (1.5x the old
+   48px, still narrower than the recording bar); "Prompting" hugs its word but is
+   never narrower than the normal bar (--ov-rest-w compact, --ov-pill-w Live).
+   Height stays --ov-base-h in every state. */
+.scard.working,
+.scard.compact.cworking,
+.scard.compact.cchip:has(.sbase-work) {
+  width: var(--ov-dots-w);
+}
+.scard.working:has(.swork-prompt) {
+  width: max-content;
+  min-width: var(--ov-pill-w);
+}
+.scard.compact.cworking:has(.swork-prompt),
+.scard.compact.cchip:has(.swork-prompt) {
+  width: max-content;
+  min-width: var(--ov-rest-w);
+}
+.sbase {
+  position: relative;
+  min-width: min-content; /* never narrower than side + middle + side */
+  height: var(--ov-base-h);
+  flex: none; /* the control row never squashes; only the text region gives */
+  padding: 0 10px;
+  display: grid;
+  /* Equal side columns (min 22px to hold the cancel button) keep the center item
+     — waveform or label — centered whether the pill is at min width or content-
+     sized. */
+  grid-template-columns: minmax(var(--ov-side-w), 1fr) auto minmax(var(--ov-side-w), 1fr);
+  align-items: center;
+}
+/* The dot sits centred in a 22px box, the same size as the cancel button on
+   the right, so both sides mirror and the waveform is exactly centred. */
+.sbase.sbase-work {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  height: var(--ov-base-h);
+  padding: 0 10px;
+  min-width: 0;
+}
+.sbase-work .swork {
+  grid-column: 1;
+}
+.sbase-l {
+  display: flex;
+  width: 22px;
+  justify-content: center;
+  align-items: center;
+  justify-self: start;
+}
+.sbase-r {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
+}
+.sdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  box-sizing: border-box;
+  transition:
+    background-color 180ms ease,
+    opacity 180ms ease;
+}
+.sdot.ready {
+  background: var(--s-accent);
+  opacity: 1;
+  animation: sdot-pulse 1.9s infinite;
+}
+/* A quiet neutral dot while the host has not delivered its first sample yet. */
+.sdot.arming {
+  background: var(--s-muted);
+  opacity: 0.45;
+  animation: none;
+}
+@keyframes sdot-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--s-accent-soft);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+.stimer {
+  font-size: 12px;
+  color: var(--s-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 240ms ease 80ms;
+}
+.scard.open {
+  --ov-side-w: 64px; /* timer + cross */
+}
+.scard.open .stimer {
+  opacity: 1;
+}
+
+/* Waveform — reactive only after the first microphone callback. While arming,
+   a muted travelling pulse acknowledges the shortcut without pretending that
+   audio levels are already being received. */
+.swave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  flex: none;
+}
+.swave i {
+  width: 4px;
+  min-height: 3px;
+  max-height: 20px;
+  border-radius: 2px;
+  background: var(--s-accent);
+  transition:
+    height 60ms ease-out,
+    background-color 180ms ease,
+    opacity 180ms ease;
+}
+.swave.arming i {
+  height: 6px !important;
+  background: var(--s-muted);
+  opacity: 0.35;
+  animation: swave-arming 900ms ease-in-out infinite;
+}
+.swave.arming i:nth-child(2),
+.swave.arming i:nth-child(8) {
+  animation-delay: 75ms;
+}
+.swave.arming i:nth-child(3),
+.swave.arming i:nth-child(7) {
+  animation-delay: 150ms;
+}
+.swave.arming i:nth-child(4),
+.swave.arming i:nth-child(6) {
+  animation-delay: 225ms;
+}
+.swave.arming i:nth-child(5) {
+  animation-delay: 300ms;
+}
+@keyframes swave-arming {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scaleY(1.5);
+    opacity: 0.7;
+  }
+}
+.sx {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: none;
+  padding: 0;
+  border: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--s-muted);
+  background: var(--s-hair);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 100ms ease;
+}
+.sx svg {
+  width: 9px;
+  height: 9px;
+  display: block;
+}
+.sx:hover {
+  background: var(--s-accent-soft);
+  color: var(--color-text);
+  transform: scale(1.05);
+}
+.sx:active {
+  transform: scale(0.95);
+}
+
+/* Accent swatches (Settings > Appearance). "default" keeps the app colour. */
+:root[data-accent="terracotta"] {
+  --s-accent: #c0643f;
+}
+:root[data-accent="olive"] {
+  --s-accent: #6f7a3c;
+}
+:root[data-accent="ochre"] {
+  --s-accent: #c48a2c;
+}
+:root[data-accent="clay"] {
+  --s-accent: #9a5b47;
+}
+:root[data-accent="moss"] {
+  --s-accent: #4f6b4a;
+}
+:root[data-accent="sand"] {
+  --s-accent: #b39567;
+}
+:root[data-accent="electric"] {
+  --s-accent: #3d5afe;
+}
+:root[data-accent="coral"] {
+  --s-accent: #ff5a5f;
+}
+:root[data-accent="violet"] {
+  --s-accent: #7c4dff;
+}
+:root[data-accent="tangerine"] {
+  --s-accent: #ff8a1f;
+}
+:root[data-accent="magenta"] {
+  --s-accent: #e83e9a;
+}
+:root[data-accent="aqua"] {
+  --s-accent: #00b8c4;
+}
+:root[data-accent="sage"] {
+  --s-accent: #8fa58c;
+}
+:root[data-accent="rose"] {
+  --s-accent: #c49a9a;
+}
+:root[data-accent="slate"] {
+  --s-accent: #7f93a8;
+}
+:root[data-accent="lilac"] {
+  --s-accent: #9e95b5;
+}
+:root[data-accent="mushroom"] {
+  --s-accent: #a39587;
+}
+:root[data-accent="fogteal"] {
+  --s-accent: #7fa3a0;
+}
+:root[data-accent]:not([data-accent="default"]) {
+  --s-accent-soft: color-mix(in srgb, var(--s-accent) 20%, transparent);
+}
+
+/* Prompt engineer choice: same width as the working bar, three equal
+   buttons that lift slightly on hover; a thin countdown line underneath.
+   Nothing picked = paste as is. */
+.scard.compact.cchip {
+  width: var(--ov-chip-w);
+}
+/* The row keeps exactly the control-row height (--ov-base-h, same as the
+   listening, transcribing and prompting rows), so the bar never jumps. */
+.sbase.schip {
+  display: flex;
+  align-items: center;
+  height: var(--ov-base-h);
+  padding: 0 3px;
+}
+/* Dark segmented capsule, the colour of the black glass. */
+.schip-track {
+  --schip-pad: 2px;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: calc(var(--ov-base-h) - 6px);
+  padding: var(--schip-pad);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-radius: 999px;
+  background: #2a2a2e;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.schip-b {
+  height: 100%;
+  min-width: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 500 11.5px/1 var(--s-font);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.62);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform 160ms cubic-bezier(0.34, 1.4, 0.64, 1),
+    background-color 150ms ease,
+    color 150ms ease;
+}
+.schip-b:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+}
+.schip-b:active {
+  transform: scale(0.97);
+}
+.schip-b.primary {
+  color: #1c1c1f;
+  background: #f4f4f6;
+}
+.schip-b.primary:hover {
+  color: #1c1c1f;
+  background: #ffffff;
+}
+/* Countdown: a thin line along the bottom edge of the capsule. */
+.schip-timer {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 1.5px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  transform-origin: left center;
+  animation: schip-countdown linear forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .schip-b,
+  .schip-timer {
+    transition: none;
+    animation: none;
+  }
+}
+@keyframes schip-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+
+/* Clear glass: one flat see-through colour, thin outline, no gradient. */
+.scard {
+  background: color-mix(in srgb, var(--color-background) 14%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+/* Clear glass tints (Settings > Appearance > Glass colour). Light washes over
+   the see-through bar; keep in sync with CLEAR_TINTS in BarPreview.tsx. */
+:root[data-ctint="frost"] .ov-stage { --c-tint: 255, 255, 255; }
+:root[data-ctint="sand"] .ov-stage { --c-tint: 236, 214, 180; }
+:root[data-ctint="rose"] .ov-stage { --c-tint: 240, 200, 204; }
+:root[data-ctint="sage"] .ov-stage { --c-tint: 200, 222, 196; }
+:root[data-ctint="sky"] .ov-stage { --c-tint: 196, 218, 242; }
+:root:not([data-glass="black"])[data-ctint]:not([data-ctint="clear"]) .scard {
+  background: rgba(var(--c-tint, 255, 255, 255), 0.32);
+}
+
+/* ============================================================
+   Wordless working animation (transcribing, cleaning, prompt engineering,
+   model loading). Five soft bars in the accent colour; the label lives on as
+   the aria-label and tooltip.
+   ============================================================ */
+.swork {
+  grid-column: 2;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+.swork i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--s-accent);
+  animation: swork-dot 1s ease-in-out infinite;
+}
+.swork i:nth-child(2) { animation-delay: 0.15s; }
+.swork i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes swork-dot {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50% { transform: scale(1); opacity: 1; }
+}
+/* Prompt engineering: quicker, with a soft glow. */
+.swork-prompt i {
+  animation-duration: 0.8s;
+  box-shadow: 0 0 6px var(--s-accent-soft);
+}
+.swork-prompt i:nth-child(2) { animation-delay: 0.13s; }
+.swork-prompt i:nth-child(3) { animation-delay: 0.26s; }
+/* Prompt engineering: a softly glowing sparkle and a white-only shimmer
+   sweeping across the word. */
+.sspark {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  fill: #fff;
+  /* Spin and pulse use separate properties, so both loop without a jump. */
+  animation:
+    sspark-spin 3.2s linear infinite,
+    sspark-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sspark-spin {
+  from { rotate: 0deg; }
+  to { rotate: 90deg; } /* a four-point star looks the same every 90deg */
+}
+@keyframes sspark-pulse {
+  0%, 100% {
+    scale: 0.8;
+    opacity: 0.75;
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4));
+  }
+  50% {
+    scale: 1.05;
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
+  }
+}
+.sprompt-text {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  /* One repeating light band: the pattern is exactly one tile wide and the
+     animation moves it by exactly one tile, so the loop never jumps. */
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    #fff 50%,
+    rgba(255, 255, 255, 0.45) 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: repeat-x;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  will-change: background-position;
+  animation: sprompt-shimmer 2.2s linear infinite;
+}
+@keyframes sprompt-shimmer {
+  from { background-position: 0 0; }
+  to { background-position: 200% 0; }
+}
+
+/* Model loading: slower and quieter. */
+.swork-load i {
+  animation-duration: 1.8s;
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swork i,
+  .sspark,
+  .sprompt-text {
+    animation: none;
+    transform: none;
+    opacity: 0.8;
+    height: 4px;
+  }
+}
+
+/* ============================================================
+   Black glass bar: dark see-through glass, white waveform, controls and
+   animations, whatever accent is picked.
+   ============================================================ */
+/* Black glass keeps the chosen accent colour; only the default accent is white. */
+:root[data-glass="black"]:not([data-accent]) .ov-stage,
+:root[data-glass="black"][data-accent="default"] .ov-stage {
+  --s-accent: #ffffff;
+  --s-accent-soft: rgba(255, 255, 255, 0.24);
+}
+:root[data-glass="black"] .ov-stage {
+  --color-text: #ffffff;
+  --s-muted: rgba(255, 255, 255, 0.66);
+  --s-faint: rgba(255, 255, 255, 0.5);
+  --s-border: rgba(255, 255, 255, 0.1);
+  --s-hair: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+:root[data-glass="black"] .ov-stage {
+  --g-tint: 10, 10, 12;
+}
+:root[data-glass="black"][data-tint="graphite"] .ov-stage { --g-tint: 38, 40, 46; }
+:root[data-glass="black"][data-tint="navy"] .ov-stage { --g-tint: 14, 24, 52; }
+:root[data-glass="black"][data-tint="plum"] .ov-stage { --g-tint: 40, 18, 46; }
+:root[data-glass="black"][data-tint="forest"] .ov-stage { --g-tint: 14, 38, 30; }
+:root[data-glass="black"][data-tint="cocoa"] .ov-stage { --g-tint: 46, 30, 22; }
+/* Chosen colour stays put: thick enough that the desktop behind cannot tint
+   it, and no colour boost (saturate) on what shows through. */
+:root[data-glass="black"] .scard {
+  background: rgba(var(--g-tint), 0.78);
+  backdrop-filter: blur(22px) saturate(60%);
+  -webkit-backdrop-filter: blur(22px) saturate(60%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+:root[data-glass="black"] .schip-b.primary {
+  color: #0a0a0c;
+  background: #f4f4f6;
+}
+:root[data-glass="black"] .stext-cap .sloading,
+:root[data-glass="black"] .stext-cap .ndetail {
+  color: rgba(255, 255, 255, 0.7);
+}

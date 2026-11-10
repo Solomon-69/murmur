@@ -1,0 +1,137 @@
+name: "murmur build"
+
+# Unsigned builds of this fork for macOS (Apple Silicon) and Windows, plus the
+# Rust and frontend test suites. The macOS app is signed locally afterwards.
+on:
+  workflow_dispatch:
+  push:
+    branches: [solomon, overnight-8-nov]
+
+concurrency:
+  group: solomon-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use Xcode 26 (Apple Intelligence)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # The default Xcode on macos-15 has no FoundationModels SDK, so the
+          # app was built with the Apple Intelligence stub and "Turn into a
+          # prompt" never reached the model. Pick the newest Xcode 26.
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$X" ]; then
+            sudo xcode-select -s "$X/Contents/Developer"
+            echo "Using $X"
+          else
+            echo "::warning::No Xcode 26 on this runner; Apple Intelligence will be built as a stub"
+          fi
+          xcodebuild -version
+      - uses: oven-sh/setup-bun@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+          key: solomon-test-v1
+      - run: bun install
+      - name: Frontend checks
+        run: |
+          bun run lint
+          bunx tsc --noEmit
+      - name: Rust tests
+        if: ${{ !cancelled() }}
+        working-directory: src-tauri
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+        run: set -o pipefail; cargo test 2>&1 | tail -150
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-15
+            target: aarch64-apple-darwin
+            args: "--target aarch64-apple-darwin --bundles app"
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: "--bundles nsis"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+            -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+          git config --system core.longpaths true
+      - uses: actions/checkout@v5
+      - name: Use Xcode 26 (Apple Intelligence)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # The default Xcode on macos-15 has no FoundationModels SDK, so the
+          # app was built with the Apple Intelligence stub and "Turn into a
+          # prompt" never reached the model. Pick the newest Xcode 26.
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$X" ]; then
+            sudo xcode-select -s "$X/Contents/Developer"
+            echo "Using $X"
+          else
+            echo "::warning::No Xcode 26 on this runner; Apple Intelligence will be built as a stub"
+          fi
+          xcodebuild -version
+      - uses: oven-sh/setup-bun@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+          key: solomon-${{ matrix.target }}-v1
+          cache-bin: false
+      - name: Install Vulkan SDK (Windows)
+        if: runner.os == 'Windows'
+        uses: humbletim/install-vulkan-sdk@v1.2
+        with:
+          version: 1.4.309.0
+          cache: true
+      - name: Install SPIRV-Headers (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          C:\vcpkg\vcpkg.exe install spirv-headers:x64-windows
+          "CMAKE_PREFIX_PATH=C:\vcpkg\installed\x64-windows" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - run: bun install
+      - name: Build
+        shell: bash
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+        run: |
+          bun run tauri build ${{ matrix.args }} \
+            --config '{"bundle":{"createUpdaterArtifacts":false,"windows":{"signCommand":null}}}'
+      - name: Check Apple Intelligence is built in
+        if: runner.os == 'macOS'
+        run: |
+          BIN=src-tauri/target/${{ matrix.target }}/release/bundle/macos/murmur.app/Contents/MacOS/murmur
+          if strings "$BIN" | grep -q "SDK requirement not met"; then
+            echo "::warning::This build has the Apple Intelligence stub: Turn into a prompt will use the built-in formatter only"
+          else
+            echo "Apple Intelligence bridge is the real one"
+          fi
+      - name: Zip macOS app
+        if: runner.os == 'macOS'
+        run: |
+          cd src-tauri/target/${{ matrix.target }}/release/bundle/macos
+          ditto -c -k --keepParent murmur.app murmur-macos-arm64.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: murmur-${{ matrix.target }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.zip
+            src-tauri/target/release/bundle/nsis/*.exe
+          retention-days: 14
