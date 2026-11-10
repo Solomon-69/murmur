@@ -1,9 +1,36 @@
-# murmur
+<!-- murmur-visuals:start -->
+<p align="center"><img src="https://solomon-69.github.io/murmur/img/icon.png" width="96" height="96" alt="murmur app icon"></p>
 
-**Talk instead of type on your Mac, offline.** Hold Control, Shift and Space, speak, and murmur pastes the text where your cursor is.
+<h1 align="center">murmur</h1>
 
-- Website: https://solomon-69.github.io/murmur/
-- Downloads: https://github.com/Solomon-69/murmur/releases
+<p align="center"><b>Talk instead of type on your Mac, offline.</b><br>Hold Option and Space, speak, let go. The text appears where your cursor is.</p>
+
+<p align="center"><a href="https://github.com/Solomon-69/murmur/releases/latest/download/murmur.dmg"><b>Download for Mac</b></a> &nbsp;·&nbsp; <a href="https://solomon-69.github.io/murmur/">Website</a> &nbsp;·&nbsp; <a href="https://github.com/Solomon-69/murmur/releases">All releases</a></p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://solomon-69.github.io/murmur/img/shots/win-smart-dark.webp">
+    <img src="https://solomon-69.github.io/murmur/img/shots/win-smart-light.webp" width="720" alt="The murmur settings window on the Smart features page">
+  </picture>
+</p>
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/bar-listening-anim.webp" width="260" alt="Recording bar while you talk"><br><sub>Hold Option and Space, talk</sub></td>
+    <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/bar-transcribing-anim.webp" width="130" alt="Recording bar while murmur writes"><br><sub>Written on your Mac</sub></td>
+    <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/bar-choice.webp" width="300" alt="As is, Prompt or Clean up"><br><sub>Turn it into a prompt</sub></td>
+  </tr>
+</table>
+
+<table align="center">
+  <tr>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://solomon-69.github.io/murmur/img/shots/win-general-dark.webp"><img src="https://solomon-69.github.io/murmur/img/shots/win-general-light.webp" width="400" alt="General settings: shortcuts, languages, microphone"></picture><br><sub>General</sub></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://solomon-69.github.io/murmur/img/shots/win-appearance-dark.webp"><img src="https://solomon-69.github.io/murmur/img/shots/win-appearance-light.webp" width="400" alt="Appearance settings: theme, bar look, glass colour"></picture><br><sub>Appearance</sub></td>
+  </tr>
+</table>
+<!-- murmur-visuals:end -->
+
+The speech model runs on your Mac, so what you say stays on your Mac. murmur is free and open source (MIT).
 
 murmur is based on [Handy by cjpais](https://github.com/cjpais/Handy) and keeps its MIT licence (see [LICENSE](LICENSE)). murmur adds its own look (wave icon, colour themes, glass recording bar), a smart prompt capsule that can turn a long dictation into a clear AI prompt or tidy it up, and a quiet microphone boost so soft speech is still heard. Automatic update checks are off.
 

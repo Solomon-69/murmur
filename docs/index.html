@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>murmur: talk instead of type on your Mac, offline</title>
-<meta name="description" content="murmur is a free, open source dictation app for Mac. Hold Control, Shift and Space, speak, and the text appears where your cursor is. Works offline. Based on Handy by cjpais (MIT).">
+<meta name="description" content="murmur is a free, open source dictation app for Mac. Hold Option and Space, speak, and the text appears where your cursor is. Works offline. Based on Handy by cjpais (MIT).">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14161c" media="(prefers-color-scheme: dark)">
@@ -218,23 +218,47 @@
   html, body { overflow-x: clip; }
 </style>
 <style>
-  .mm-stage { position: relative; width: min(460px, 100%); margin: 0 auto; padding: 0 0 70px; animation: pop .9s var(--spring) both .2s; }
-  .mm-menubar { display: flex; align-items: center; justify-content: flex-end; gap: 14px; height: 30px; padding: 0 14px; border-radius: 12px 12px 0 0; background: color-mix(in srgb, var(--surface) 80%, var(--bg-2)); border: 1px solid var(--line); border-bottom: 0; font-size: 12.5px; color: var(--ink-2); }
-  .mm-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); opacity: .5; margin-right: auto; }
-  .mm-mbicon { width: 17px; height: 17px; color: var(--ink); }
-  .mm-doc { min-height: 210px; padding: 26px 26px 30px; background: var(--surface); border: 1px solid var(--line); border-radius: 0 0 16px 16px; box-shadow: var(--shadow-lift); font-size: 16px; color: var(--ink); }
-  .mm-line { margin: 0 0 10px; }
-  .mm-typed { color: var(--ink); }
-  .mm-caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -3px; background: var(--ink); animation: mmblink 1.1s steps(1) infinite; }
-  @keyframes mmblink { 50% { opacity: 0; } }
-  .mm-pill { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; padding: 10px 16px 10px 18px; border-radius: 999px; background: rgba(18, 18, 22, .86); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 18px 40px -14px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.08); color: #f3f3f1; }
-  .mm-wave { display: flex; align-items: center; gap: 4px; height: 22px; }
-  .mm-wave i { display: block; width: 5px; height: 6px; border-radius: 3px; background: #f3f3f1; animation: mmwave 1.2s ease-in-out infinite; }
-  .mm-wave i:nth-child(1), .mm-wave i:nth-child(7) { animation-delay: -.9s; } .mm-wave i:nth-child(2), .mm-wave i:nth-child(6) { animation-delay: -.6s; } .mm-wave i:nth-child(3), .mm-wave i:nth-child(5) { animation-delay: -.3s; }
-  @keyframes mmwave { 0%, 100% { height: 6px; } 50% { height: 22px; } }
-  .mm-keys { font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 3px 8px; border-radius: 7px; background: rgba(255,255,255,.12); }
-  @media (prefers-reduced-motion: reduce) { .mm-wave i, .mm-caret, .mm-stage { animation: none; } .mm-wave i:nth-child(4) { height: 20px; } .mm-wave i:nth-child(3), .mm-wave i:nth-child(5) { height: 14px; } }
+  /* real app visuals: screenshots and short loops of the actual murmur window and recording bar */
+  .herofig { position: relative; width: min(560px, 100%); margin: 0 auto; padding-bottom: 34px; }
+  .win { display: block; width: 100%; }
+  .win img { display: block; width: 100%; height: auto; filter: drop-shadow(0 26px 40px rgba(20, 24, 40, .22)) drop-shadow(0 2px 6px rgba(20, 24, 40, .10)); }
+  @media (prefers-color-scheme: dark) { .win img { filter: drop-shadow(0 26px 44px rgba(0, 0, 0, .6)) drop-shadow(0 2px 6px rgba(0, 0, 0, .4)); } }
+  .herofig .strip { position: absolute; left: 50%; bottom: 0; width: min(300px, 64%); transform: translateX(-50%); }
+  .strip { display: block; border-radius: 18px; overflow: hidden; background: #e6e8ec; box-shadow: 0 18px 40px -16px rgba(20, 24, 40, .45), inset 0 0 0 1px rgba(255, 255, 255, .5); }
+  .strip video, .strip img { display: block; width: 100%; height: auto; }
+
+  .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .tile { grid-column: span 3; margin: 0; display: flex; flex-direction: column; background: var(--surface); border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); }
+  .tile.t3 { grid-column: span 2; }
+  .tile.t4 { grid-column: span 4; }
+  .tile .stage { display: grid; place-items: center; min-height: 200px; padding: 28px 20px; background: #e6e8ec; }
+  .tile .stage video, .tile .stage > img { display: block; height: auto; max-width: 100%; }
+  .tile .stage video, .tile .stage > img, .strip video, .strip img { -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent), linear-gradient(transparent, #000 16%, #000 84%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent), linear-gradient(transparent, #000 16%, #000 84%, transparent); mask-composite: intersect; }
+  .stage .v-listen { width: min(320px, 100%); } .stage .v-work { width: 170px; } .stage .v-choice { width: min(400px, 100%); }
+  .tile .stage.shot-crop { padding: 22px 22px 0; align-items: end; }
+  .tile .stage.shot-crop picture, .tile .stage.shot-crop img { display: block; width: 100%; height: auto; border-radius: 14px 14px 0 0; }
+  .tile .stage.shot-crop img { box-shadow: 0 -1px 0 rgba(255, 255, 255, .6), 0 12px 30px -12px rgba(20, 24, 40, .35); }
+  .tile figcaption { padding: 18px 22px 22px; }
+  .tile h3 { margin: 0 0 4px; font: 700 18px/1.25 var(--font-round); }
+  .tile p { margin: 0; color: var(--ink-2); font-size: 15px; text-wrap: pretty; }
+  @media (max-width: 860px) { .tile, .tile.t3, .tile.t4 { grid-column: span 6; } .tile .stage { min-height: 160px; } }
+
+  @media (prefers-color-scheme: dark) { .tile .stage, .strip { filter: brightness(.84); } }
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--bg-2); margin: 0 0 30px; }
+  .tabs button { min-width: 96px; min-height: 40px; padding: 0 18px; border: 0; border-radius: 10px; background: transparent; color: var(--ink-2); font: 600 15px/1 var(--font); text-align: center; cursor: pointer; transition: background-color .2s, color .2s, box-shadow .2s; }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(20, 24, 40, .12); }
+  .tabs button:active { transform: scale(.97); }
+  .screens { display: grid; grid-template-columns: 1fr 1fr; gap: 48px 40px; align-items: start; }
+  .screens figure { margin: 0; }
+  .screens figure.wide { grid-column: 1 / -1; width: min(760px, 100%); justify-self: center; }
+  .screens figcaption { margin-top: 14px; text-align: center; font-size: 15px; color: var(--ink-2); }
+  .screens figcaption b { color: var(--ink); font-weight: 650; }
+  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; gap: 36px; } }
+  [role="tabpanel"][hidden] { display: none; }
+  img, video { outline: 0; }
+  h1, h2, h3 { text-wrap: balance; }
 </style>
+
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/site.js" defer></script>
 <script>try{history.scrollRestoration='manual'}catch(e){}if(!location.hash){scrollTo(0,0);addEventListener('pageshow',function(){scrollTo(0,0)});addEventListener('load',function(){scrollTo(0,0);setTimeout(function(){scrollTo(0,0)},60)})}</script>
@@ -251,6 +275,7 @@
     <nav aria-label="Sections">
       <ul>
         <li class="opt"><a href="#features">Features</a></li>
+        <li class="opt"><a href="#screens">Screens</a></li>
         <li><a href="#install">Install</a></li>
         <li class="opt"><a href="#faq">FAQ</a></li>
       </ul>
@@ -267,7 +292,7 @@
       <span class="eyebrow"><i aria-hidden="true"></i>Free and open source for Mac</span>
       <h1>murmur</h1>
       <p class="sub">Talk instead of type, offline</p>
-      <p class="lede">Hold Control, Shift and Space, say what you want to write, and let go. murmur turns your voice into text and pastes it where your cursor is, in any app. The speech model runs on your Mac, so what you say stays on your Mac.</p>
+      <p class="lede">Hold <kbd>Option</kbd> <kbd>Space</kbd>, speak, let go. murmur types what you said in any app, and your voice never leaves your Mac.</p>
       <div class="downloads">
         <a class="btn primary" href="https://github.com/Solomon-69/murmur/releases/latest/download/murmur.dmg">
           <svg class="os" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.7-1-2.7-4.1zM13.9 5c.7-.9 1.2-2 1.1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3-1.5z"/></svg>
@@ -281,21 +306,13 @@
 
     <div class="stagebox">
       <div class="glow" aria-hidden="true"></div>
-      <div class="mm-stage" aria-hidden="true">
-        <div class="mm-menubar">
-          <span class="mm-dot"></span>
-          <svg class="mm-mbicon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>
-          <span class="mm-clock">Wed 9:41</span>
-        </div>
-        <div class="mm-doc">
-          <p class="mm-line">Hi Sam, thanks for the notes on the draft.</p>
-          <p class="mm-line mm-typed">I will send the new version on Friday<span class="mm-caret"></span></p>
-        </div>
-        <div class="mm-pill">
-          <span class="mm-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-          <span class="mm-keys">&#8963;&#8679; Space</span>
-        </div>
-      </div>
+      <figure class="herofig">
+        <picture class="win">
+          <source media="(prefers-color-scheme: dark)" srcset="img/shots/win-smart-dark.webp">
+          <img src="img/shots/win-smart-light.webp" width="1440" height="1200" alt="The murmur settings window on the Smart features page: Smart prompt mode, Hands-free and Personal dictionary" fetchpriority="high">
+        </picture>
+        <span class="strip"><video class="loop" autoplay muted loop playsinline preload="auto" poster="img/shots/bar-listening.webp" width="380" height="106" aria-label="The murmur recording bar while you talk: a dot, a moving sound wave and a cancel button"><source src="img/shots/bar-listening.webm" type="video/webm"><source src="img/shots/bar-listening.mp4" type="video/mp4"></video></span>
+      </figure>
     </div>
   </div>
 
@@ -303,38 +320,40 @@
     <div class="wrap">
       <p class="kicker reveal">What it does</p>
       <h2 class="reveal">Say it, and it is written</h2>
-      <p class="intro reveal">murmur sits in the menu bar and waits for your shortcut. It is free, open source and works without the internet once the speech model is on your Mac.</p>
-      <div class="points">
-        <div class="point reveal">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8.3-7 9.5-4-1.2-7-5-7-9.5V6z"/></svg>
-          <h3>Offline dictation</h3>
-          <p>The speech model is downloaded once during setup and then runs on your Mac. Your voice is never sent to a server.</p>
-        </div>
-        <div class="point reveal">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18v10H3zM7 11h1M11 11h2M16 11h1M8 14h8"/></svg>
-          <h3>Hold Control, Shift and Space</h3>
-          <p>Hold the shortcut, talk, let go, and the text appears in the app you are using. Or tap it once and keep talking until you press it again. You can change the shortcut.</p>
-        </div>
-        <div class="point reveal">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/></svg>
-          <h3>Smart prompt and clean-up</h3>
-          <p>After a long dictation, a small capsule offers to turn what you said into a clear, well-organised prompt for AI apps, or to tidy it up. It never changes your words unless you pick it.</p>
-        </div>
-        <div class="point reveal">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.3-1.7-.4-1.1.3-2.3 1.5-2.3H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10zM7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01"/></svg>
-          <h3>Colour themes and glass colours</h3>
-          <p>Pick an accent colour for the whole app and the recording bar, from calm greys and earth tones to brighter colours, and choose how see-through the bar looks.</p>
-        </div>
-        <div class="point reveal">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-          <h3>Quiet microphone boost</h3>
-          <p>If you speak softly or sit far from the microphone, murmur raises the level before the speech model listens, so a quiet dictation does not come back empty.</p>
-        </div>
-        <div class="point reveal">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg>
-          <h3>Your words, your way</h3>
-          <p>A personal dictionary for names murmur should always spell your way, snippets you trigger with a short phrase, and a different tone for each app.</p>
-        </div>
+      <div class="bento">
+        <figure class="tile t4 reveal">
+          <div class="stage"><video class="loop v-listen" autoplay muted loop playsinline preload="none" poster="img/shots/bar-listening.webp" width="380" height="106" aria-label="The recording bar while you talk"><source src="img/shots/bar-listening.webm" type="video/webm"><source src="img/shots/bar-listening.mp4" type="video/mp4"></video></div>
+          <figcaption><h3>Hold Option and Space, talk</h3><p>A small bar shows murmur is listening. Let go and the text lands where your cursor is.</p></figcaption>
+        </figure>
+        <figure class="tile t3 reveal">
+          <div class="stage"><video class="loop v-work" autoplay muted loop playsinline preload="none" poster="img/shots/bar-transcribing.webp" width="190" height="96" aria-label="The recording bar while murmur writes out what you said"><source src="img/shots/bar-transcribing.webm" type="video/webm"><source src="img/shots/bar-transcribing.mp4" type="video/mp4"></video></div>
+          <figcaption><h3>Written on your Mac</h3><p>The speech model runs offline. Nothing you say is sent anywhere.</p></figcaption>
+        </figure>
+        <figure class="tile t3 reveal">
+          <div class="stage"><img class="v-choice" src="img/shots/bar-choice.webp" width="520" height="105" alt="The choice capsule in the recording bar: As is, Prompt, Clean up" loading="lazy"></div>
+          <figcaption><h3>Turn it into a prompt</h3><p>After a long dictation, pick As is, Prompt or Clean up.</p></figcaption>
+        </figure>
+        <figure class="tile t4 reveal">
+          <div class="stage shot-crop"><picture><source media="(prefers-color-scheme: dark)" srcset="img/shots/card-prompt-dark.webp"><img src="img/shots/card-prompt-light.webp" width="992" height="386" alt="Smart prompt mode in Settings, set to Smart, with the choices Off, Smart, Ask and Always" loading="lazy"></picture></div>
+          <figcaption><h3>Smart prompt mode</h3><p>Off, Smart, Ask or Always. Say &ldquo;turn this into a prompt&rdquo; to force it.</p></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <p class="kicker reveal">A closer look</p>
+      <h2 class="reveal">The settings window</h2>
+      <div class="screens" role="tabpanel" id="panel-mac">
+        <figure class="reveal">
+          <picture class="win"><source media="(prefers-color-scheme: dark)" srcset="img/shots/win-general-dark.webp"><img src="img/shots/win-general-light.webp" width="1440" height="1200" alt="The General page: the Transcribe and Cancel shortcuts, extra shortcuts, languages and microphone" loading="lazy"></picture>
+          <figcaption><b>General.</b> Your shortcut, languages and microphone.</figcaption>
+        </figure>
+        <figure class="reveal">
+          <picture class="win"><source media="(prefers-color-scheme: dark)" srcset="img/shots/win-appearance-dark.webp"><img src="img/shots/win-appearance-light.webp" width="1440" height="1200" alt="The Appearance page: app theme, a preview of the recording bar, bar look and glass colour" loading="lazy"></picture>
+          <figcaption><b>Appearance.</b> Theme, bar look and glass colour.</figcaption>
+        </figure>
       </div>
     </div>
   </section>
@@ -354,7 +373,7 @@
           <ol>
             <li>Open the downloaded file and drag <b>murmur</b> into Applications.</li>
             <li>Open murmur. Allow the microphone, and allow Accessibility so it can paste for you. Pick a speech model and let it download.</li>
-            <li>Click into any text box, hold <b>Control, Shift and Space</b>, speak, and let go.</li>
+            <li>Click into any text box, hold <b>Option and Space</b>, speak, and let go.</li>
           </ol>
         </div>
       </div>
@@ -375,7 +394,7 @@
       </details>
       <details class="reveal">
         <summary>Can I change the shortcut?</summary>
-        <p>Yes. Control, Shift and Space is the starting shortcut. You can change it in Settings, and choose between holding it or tapping it once.</p>
+        <p>Yes. Option and Space is the starting shortcut. You can change it on the General page in Settings, and choose between holding it or tapping it once.</p>
       </details>
       <details class="reveal">
         <summary>Which languages does it understand?</summary>
@@ -455,6 +474,23 @@
       el.style.transitionDelay = (i % 6) * 40 + 'ms';
       io.observe(el);
     });
+  })();
+</script>
+<script>
+  // Short loops of the real recording bar: play only while on screen, restart each time they come back into view, stay still for reduced motion.
+  (function () {
+    var vids = [].slice.call(document.querySelectorAll('video.loop'));
+    var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    vids.forEach(function (v) { v.muted = true; v.removeAttribute('controls'); if (still) { v.removeAttribute('autoplay'); v.pause(); } });
+    if (still || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var v = e.target;
+        if (e.isIntersecting) { if (v.preload === 'none') { v.preload = 'auto'; v.load(); } try { v.currentTime = 0; } catch (x) {} var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+        else v.pause();
+      });
+    }, { threshold: 0.25 });
+    vids.forEach(function (v) { io.observe(v); });
   })();
 </script>
 </body>
