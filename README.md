@@ -49,3 +49,5 @@ You can change the shortcut on the General page in Settings, and choose between 
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+<!-- updated 2026-11-15 -->
