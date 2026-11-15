@@ -15,7 +15,7 @@ interface ThemeSelectorProps {
   grouped?: boolean;
 }
 
-/** System / Light / Dark / Black. Black is saved as Dark plus `black_theme`. */
+/** System / Light / Dark. Choosing any of them also turns the old Black theme off. */
 export const ThemeSelector: React.FC<ThemeSelectorProps> = React.memo(
   ({ descriptionMode = "tooltip", grouped = false }) => {
     const { t } = useTranslation();
@@ -29,11 +29,10 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = React.memo(
     }));
 
     const handleChange = async (value: string) => {
-      const next = value as AppTheme;
+      const next = (value === "black" ? "dark" : value) as AppTheme;
       applyTheme(next);
-      const black = next === "black";
-      await updateSetting("black_theme", black);
-      await updateSetting("theme", black ? "dark" : next);
+      await updateSetting("black_theme", false);
+      await updateSetting("theme", next);
     };
 
     return (

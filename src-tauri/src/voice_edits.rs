@@ -21,12 +21,42 @@ const RESTATE_WINDOW: usize = 25;
 
 const SCRATCH_CUES: [&str; 2] = ["scratch that", "delete that"];
 
+/// Words that take back what was just said, before "I meant ...":
+/// "the shop, oh no, I didn't mean that, I meant the park". Longest first.
+const RETRACT_CUES: [&str; 12] = [
+    "that's not what i meant",
+    "that is not what i meant",
+    "i didn't mean that",
+    "i did not mean that",
+    "wait no",
+    "no wait",
+    "oh no",
+    "not that",
+    "actually",
+    "sorry",
+    "oops",
+    "no",
+];
+/// "I meant" is a clear correction on its own; "I mean" only after a retraction.
+const MEANT_CUES: [&str; 3] = ["i meant to say", "i meant", "i mean"];
+/// Most words of the correction used to find what it replaces.
+const MAX_CORRECTION_WORDS: usize = 6;
+
 /// Corrections are always on (no setting): free rules first, then the
 /// on-device model for changes of mind the rules cannot see, then spoken
 /// punctuation and numbers, then snippets.
 pub fn apply(text: &str, _corrections: bool, snippets: &[Snippet]) -> String {
+    apply_with(text, snippets, None)
+}
+
+/// `apply`, letting the online AI service (when set up) fix changes of mind.
+pub fn apply_with(
+    text: &str,
+    snippets: &[Snippet],
+    settings: Option<&crate::settings::AppSettings>,
+) -> String {
     let ruled = apply_corrections(text);
-    let fixed = crate::smart_fix::apply(&ruled);
+    let fixed = crate::smart_fix::apply_with(&ruled, settings);
     let corrected = crate::spoken_format::apply(&fixed);
     expand_snippets(&corrected, snippets)
 }
@@ -75,11 +105,92 @@ fn restatement_cut(words: &[&str], i: usize, out: &[String]) -> Option<(usize, u
     None
 }
 
+/// Matches retraction words then "I meant" at `i`; returns how many words
+/// the cue takes. "I mean" needs a retraction before it ("no, I mean").
+fn meant_cue_at(words: &[&str], i: usize) -> Option<usize> {
+    let mut j = i;
+    let mut retracted = false;
+    while let Some(n) = cue_at(words, j, &RETRACT_CUES) {
+        j += n;
+        retracted = true;
+    }
+    let n = cue_at(words, j, &MEANT_CUES)?;
+    let strong = norm(words[j + 1]) == "meant";
+    (retracted || strong).then_some(j + n - i)
+}
+
+/// Where in `out` the correction starts replacing: the last earlier use of
+/// the correction's first word in the same sentence ("to the shop" ... "the
+/// park"), else just the last word (or the last name: "New York" ... "Boston").
+fn correction_cut(out: &[String], correction: &[&str]) -> usize {
+    let first = correction.first().map(|w| norm(w)).unwrap_or_default();
+    let sentence_start = out
+        .iter()
+        .enumerate()
+        .rev()
+        .skip(1)
+        .find(|(_, w)| ends_sentence(w))
+        .map_or(0, |(k, _)| k + 1);
+    if !first.is_empty() {
+        if let Some(p) = (sentence_start..out.len()).rev().find(|&p| norm(&out[p]) == first) {
+            return p;
+        }
+    }
+    let is_cap = |w: &String| w.chars().next().is_some_and(char::is_uppercase);
+    let mut cut = out.len().saturating_sub(1).max(sentence_start.min(out.len()));
+    if out.last().is_some_and(is_cap) {
+        while cut > sentence_start + 1
+            && out.len() - cut < MAX_CORRECTED_WORDS
+            && is_cap(&out[cut - 1])
+            && !ends_clause(&out[cut - 1])
+        {
+            cut -= 1;
+        }
+    }
+    cut
+}
+
 pub fn apply_corrections(text: &str) -> String {
     let words: Vec<&str> = text.split_whitespace().collect();
     let mut out: Vec<String> = Vec::with_capacity(words.len());
     let mut i = 0;
+    // After a correction, the next word follows the casing of what it replaced.
+    let mut match_case: Option<bool> = None;
     while i < words.len() {
+        if !out.is_empty() {
+            if let Some(n) = meant_cue_at(&words, i) {
+                let after = &words[i + n..];
+                let end = after
+                    .iter()
+                    .position(|w| ends_clause(w))
+                    .map_or(after.len(), |k| k + 1)
+                    .min(MAX_CORRECTION_WORDS);
+                let cut = correction_cut(&out, &after[..end]);
+                let replaced_lower = out
+                    .get(cut)
+                    .and_then(|w| w.chars().next())
+                    .is_some_and(char::is_lowercase);
+                out.truncate(cut);
+                if let Some(last) = out.last_mut() {
+                    if last.ends_with(',') {
+                        last.pop();
+                    }
+                }
+                match_case = Some(replaced_lower);
+                i += n;
+                continue;
+            }
+        }
+        if let Some(lower) = match_case.take() {
+            let w = words[i];
+            if lower && norm(w) != "i" && !out.last().is_some_and(|l| ends_sentence(l)) {
+                let mut c = w.chars();
+                let first = c.next().map(|f| f.to_lowercase().collect::<String>()).unwrap_or_default();
+                out.push(first + c.as_str());
+                i += 1;
+                continue;
+            }
+        }
         if let Some(n) = cue_at(&words, i, &SCRATCH_CUES) {
             // Drop back to the end of the previous sentence.
             while let Some(last) = out.last() {
@@ -185,6 +296,49 @@ mod tests {
         Snippet {
             trigger: trigger.into(),
             text: text.into(),
+        }
+    }
+
+    #[test]
+    fn takes_back_what_was_said_before_i_meant() {
+        let cases = [
+            (
+                "I want to go to the shop, oh no, I didn't mean that, I meant the park.",
+                "I want to go to the park.",
+            ),
+            ("Meet me on Tuesday, oh no I meant Wednesday.", "Meet me on Wednesday."),
+            (
+                "I like strawberries. Oh no, I didn't mean that. I meant I like bananas.",
+                "I like bananas.",
+            ),
+            (
+                "Can you send the file to John, sorry, I meant to say send it to Maria?",
+                "Can you send it to Maria?",
+            ),
+            (
+                "The meeting is at three, no wait, I meant four, and bring the slides.",
+                "The meeting is at four, and bring the slides.",
+            ),
+            ("Book a table for two, I meant four people.", "Book a table for four people."),
+            (
+                "Turn this into a red button, that's not what I meant, I meant a blue button.",
+                "Turn this into a blue button.",
+            ),
+        ];
+        for (said, meant) in cases {
+            assert_eq!(apply_corrections(said), meant, "said: {said}");
+        }
+    }
+
+    #[test]
+    fn leaves_plain_i_mean_alone() {
+        for t in [
+            "I mean, it was a good day.",
+            "It is fine, I mean it.",
+            "Sorry I am late, the bus was slow.",
+            "Oh no, the train is late again.",
+        ] {
+            assert_eq!(apply_corrections(t), t);
         }
     }
 

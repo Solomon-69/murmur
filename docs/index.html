@@ -231,6 +231,9 @@
   .tile { grid-column: span 3; margin: 0; display: flex; flex-direction: column; background: var(--surface); border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); }
   .tile.t3 { grid-column: span 2; }
   .tile.t4 { grid-column: span 4; }
+  .tile.t6 { grid-column: 1 / -1; }
+  .tile .stage.colours { padding: 30px 20px; }
+  .tile .stage.colours img { width: min(520px, 100%); height: auto; filter: drop-shadow(0 16px 30px rgba(20, 24, 40, .22)); }
   .tile .stage { display: grid; place-items: center; min-height: 200px; padding: 28px 20px; background: #e6e8ec; }
   .tile .stage video, .tile .stage > img { display: block; height: auto; max-width: 100%; }
   .tile .stage video, .tile .stage > img, .strip video, .strip img { -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent), linear-gradient(transparent, #000 16%, #000 84%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent), linear-gradient(transparent, #000 16%, #000 84%, transparent); mask-composite: intersect; }
@@ -241,7 +244,7 @@
   .tile figcaption { padding: 18px 22px 22px; }
   .tile h3 { margin: 0 0 4px; font: 700 18px/1.25 var(--font-round); }
   .tile p { margin: 0; color: var(--ink-2); font-size: 15px; text-wrap: pretty; }
-  @media (max-width: 860px) { .tile, .tile.t3, .tile.t4 { grid-column: span 6; } .tile .stage { min-height: 160px; } }
+  @media (max-width: 860px) { .tile, .tile.t3, .tile.t4, .tile.t6 { grid-column: span 6; } .tile .stage { min-height: 160px; } }
 
   @media (prefers-color-scheme: dark) { .tile .stage, .strip { filter: brightness(.84); } }
   .tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--bg-2); margin: 0 0 30px; }
@@ -337,6 +340,10 @@
           <div class="stage shot-crop"><picture><source media="(prefers-color-scheme: dark)" srcset="img/shots/card-prompt-dark.webp"><img src="img/shots/card-prompt-light.webp" width="992" height="386" alt="Smart prompt mode in Settings, set to Smart, with the choices Off, Smart, Ask and Always" loading="lazy"></picture></div>
           <figcaption><h3>Smart prompt mode</h3><p>Off, Smart, Ask or Always. Say &ldquo;turn this into a prompt&rdquo; to force it.</p></figcaption>
         </figure>
+        <figure class="tile t6 reveal">
+          <div class="stage colours"><picture><source media="(prefers-color-scheme: dark)" srcset="img/shots/card-colours-dark.webp"><img src="img/shots/card-colours-light.webp" width="650" height="360" alt="The colour picker: Earth, Vibey and Muted rows with six colours each, above the main colour row" loading="lazy"></picture></div>
+          <figcaption><h3>Your colours</h3><p>Pick a colour for the app and the bar: Earth, Vibey or Muted.</p></figcaption>
+        </figure>
       </div>
     </div>
   </section>
@@ -351,8 +358,8 @@
           <figcaption><b>General.</b> Your shortcut, languages and microphone.</figcaption>
         </figure>
         <figure class="reveal">
-          <picture class="win"><source media="(prefers-color-scheme: dark)" srcset="img/shots/win-appearance-dark.webp"><img src="img/shots/win-appearance-light.webp" width="1440" height="1200" alt="The Appearance page: app theme, a preview of the recording bar, bar look and glass colour" loading="lazy"></picture>
-          <figcaption><b>Appearance.</b> Theme, bar look and glass colour.</figcaption>
+          <picture class="win"><source media="(prefers-color-scheme: dark)" srcset="img/shots/win-colours-dark.webp"><img src="img/shots/win-colours-light.webp" width="1440" height="1200" alt="The Appearance page: bar look, glass colour, size and place, and the colour picker open" loading="lazy"></picture>
+          <figcaption><b>Appearance.</b> Glass, size, place and colour.</figcaption>
         </figure>
       </div>
     </div>

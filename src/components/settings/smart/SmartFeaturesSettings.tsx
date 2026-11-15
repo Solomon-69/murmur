@@ -44,7 +44,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       <div className="min-w-0 flex-1">
         <h2 className="text-[15px] font-semibold leading-tight">{title}</h2>
         <p className="mt-1 text-[13px] leading-snug text-ink-2">{what}</p>
-        <p className="mt-2 inline-flex max-w-full items-baseline gap-1.5 rounded-full bg-wash px-3 py-1 text-xs text-ink-2">
+        <p className="mt-2 inline-flex max-w-full items-baseline gap-1.5 rounded-[10px] bg-wash px-3 py-1.5 text-xs text-ink-2">
           <span className="font-semibold text-text">{exampleLabel}</span>
           <span className="font-transcript">{example}</span>
         </p>

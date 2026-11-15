@@ -23,7 +23,8 @@ export type AppTheme = Theme | "black";
 
 export const THEME_STORAGE_KEY = "murmur.theme";
 
-export const THEME_OPTIONS: AppTheme[] = ["system", "light", "dark", "black"];
+/** "black" was removed from the picker; an old saved Black opens as Dark. */
+export const THEME_OPTIONS: AppTheme[] = ["system", "light", "dark"];
 
 const isAppTheme = (value: unknown): value is AppTheme =>
   value === "system" ||
@@ -35,7 +36,7 @@ const isAppTheme = (value: unknown): value is AppTheme =>
 export const resolveTheme = (
   theme: Theme | undefined,
   black: boolean | undefined,
-): AppTheme => (black ? "black" : (theme ?? "system"));
+): AppTheme => (black ? "dark" : (theme ?? "system"));
 
 /** Apply a theme to the document root and remember it for the next launch. */
 export const applyTheme = (theme: AppTheme): void => {
@@ -60,6 +61,7 @@ export const getStoredTheme = (): AppTheme => {
     const stored =
       localStorage.getItem(THEME_STORAGE_KEY) ??
       localStorage.getItem("handy.theme");
+    if (stored === "black") return "dark";
     if (isAppTheme(stored)) return stored;
   } catch {
     // ignore

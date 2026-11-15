@@ -43,6 +43,13 @@ interface SectionConfig {
 }
 
 export const SECTIONS_CONFIG = {
+  // Appearance first: the top tab in the sidebar.
+  appearance: {
+    labelKey: "sidebar.appearance",
+    icon: Palette,
+    component: AppearanceSettings,
+    enabled: () => true,
+  },
   general: {
     labelKey: "sidebar.general",
     icon: SlidersHorizontal,
@@ -53,12 +60,6 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.smart",
     icon: Wand2,
     component: SmartFeaturesSettings,
-    enabled: () => true,
-  },
-  appearance: {
-    labelKey: "sidebar.appearance",
-    icon: Palette,
-    component: AppearanceSettings,
     enabled: () => true,
   },
   history: {

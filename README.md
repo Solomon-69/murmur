@@ -25,7 +25,7 @@
 <table align="center">
   <tr>
     <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://solomon-69.github.io/murmur/img/shots/win-general-dark.webp"><img src="https://solomon-69.github.io/murmur/img/shots/win-general-light.webp" width="400" alt="General settings: shortcuts, languages, microphone"></picture><br><sub>General</sub></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://solomon-69.github.io/murmur/img/shots/win-appearance-dark.webp"><img src="https://solomon-69.github.io/murmur/img/shots/win-appearance-light.webp" width="400" alt="Appearance settings: theme, bar look, glass colour"></picture><br><sub>Appearance</sub></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://solomon-69.github.io/murmur/img/shots/win-colours-dark.webp"><img src="https://solomon-69.github.io/murmur/img/shots/win-colours-light.webp" width="400" alt="Appearance settings: glass, size, place and the colour picker"></picture><br><sub>Appearance</sub></td>
   </tr>
 </table>
 <!-- murmur-visuals:end -->

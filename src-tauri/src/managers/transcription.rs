@@ -1696,11 +1696,7 @@ fn post_process_transcription_text(
         );
 
         let normalized = normalize_transcription_output(&without_fillers);
-        crate::voice_edits::apply(
-            &normalized,
-            settings.voice_corrections_enabled,
-            &settings.snippets,
-        )
+        crate::voice_edits::apply_with(&normalized, &settings.snippets, Some(settings))
     })
 }
 

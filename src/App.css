@@ -229,14 +229,16 @@
 :root {
   --swatch-ring: 0 0 0 2px #fff, 0 0 0 3px rgba(0, 0, 0, 0.15);
 }
+/* Dark themes: a white outer circle with a small gap, so the chosen colour
+   stands out even on the black swatch. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --swatch-ring: 0 0 0 2px #fff;
+    --swatch-ring: 0 0 0 2px var(--color-card), 0 0 0 4px #fff;
   }
 }
 :root[data-theme="dark"],
 :root[data-theme="black"] {
-  --swatch-ring: 0 0 0 2px #fff;
+  --swatch-ring: 0 0 0 2px var(--color-card), 0 0 0 4px #fff;
 }
 
 :root[data-theme="dark"],

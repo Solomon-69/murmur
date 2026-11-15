@@ -2,7 +2,7 @@ import React from "react";
 
 /** Hairline so very pale swatches keep an edge on a light card. */
 const HAIRLINE =
-  "inset 0 0 0 1px color-mix(in srgb, var(--color-text) 10%, transparent)";
+  "inset 0 0 0 1px color-mix(in srgb, var(--color-text) 18%, transparent)";
 /** White ring touching the circle; App.css adds a faint outer line in light theme. */
 const RING = "var(--swatch-ring)";
 /** Black ring touching the circle, for the pale clear-glass colours. */
@@ -51,12 +51,13 @@ export const CLEAR_SWATCH_COLORS: Record<string, string> = {
   sky: "#c6d6ee",
 };
 
-/** Swatch preview colours for the black glass row (not what the bar renders). */
+/** Swatch preview colours for the black glass row (not what the bar renders).
+ *  One solid colour each, lifted a little so the dark tints are easy to tell apart. */
 export const BLACK_SWATCH_COLORS: Record<string, string> = {
-  black: "#18181a",
-  graphite: "#3a3a40",
-  navy: "#26305a",
-  plum: "#4a2a4e",
-  forest: "#26402c",
-  cocoa: "#4a3324",
+  black: "#111113",
+  graphite: "#53545c",
+  navy: "#30448a",
+  plum: "#6e3a76",
+  forest: "#356645",
+  cocoa: "#77502f",
 };

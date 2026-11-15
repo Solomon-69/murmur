@@ -11,7 +11,11 @@
 const CUES: &[&str] = &[
     "or oh", "oh no", "no wait", "hold on", "i mean", "or rather", "sorry i meant",
     "scratch that", "never mind", "nevermind", "let me rephrase", "i meant", "no no",
+    "didn't mean", "not what i meant", "wait no", "actually no", "i mean", "let me start again",
 ];
+/// The online AI service is fast, so it may take long dictations too.
+const ONLINE_MAX_WORDS: usize = 400;
+const ONLINE_TIMEOUT_MS: u64 = 4000;
 
 const MIN_WORDS: usize = 5;
 /// Longer text is left to the free rules: the on-device model took about
@@ -114,7 +118,32 @@ fn rewrite_with_timeout(text: &str) -> Result<String, String> {
 
 /// Returns the fixed text, or the original when no fix is needed or possible.
 pub fn apply(text: &str) -> String {
+    apply_with(text, None)
+}
+
+/// Like `apply`, but tries the online AI service from Post Process settings
+/// first when one is set up (any length up to ONLINE_MAX_WORDS).
+pub fn apply_with(text: &str, settings: Option<&crate::settings::AppSettings>) -> String {
     let text = &drop_double_words(text);
+    let w = words(text);
+    let signs = has_cue(&w) || has_repeat(&w);
+    if let Some(s) = settings {
+        if signs && (MIN_WORDS..=ONLINE_MAX_WORDS).contains(&w.len()) {
+            if let Some(answer) = crate::prompt_chip::rewrite_via_api(s, INSTRUCTION, text, ONLINE_TIMEOUT_MS) {
+                match answer {
+                    Ok(out) => {
+                        let out = out.trim().trim_matches('"').trim().to_string();
+                        if acceptable(text, &out) {
+                            log::info!("smart fix (online): {} -> {} words", w.len(), words(&out).len());
+                            return out;
+                        }
+                        log::info!("smart fix (online): answer rejected, trying on-device");
+                    }
+                    Err(e) => log::info!("smart fix (online) failed: {e}"),
+                }
+            }
+        }
+    }
     if !needs_fix(text) {
         return text.to_string();
     }

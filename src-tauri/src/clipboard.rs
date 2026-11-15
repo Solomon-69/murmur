@@ -97,6 +97,23 @@ fn should_restore_clipboard(handling: ClipboardHandling) -> bool {
 pub static KEEP_NEXT_ON_CLIPBOARD: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
+/// Set after "Turn into a prompt": the words as spoken. Once the prompt is
+/// pasted, these go on the clipboard (in place of the prompt or the old
+/// clipboard), so the person can always get back what they said.
+pub static ORIGINAL_AFTER_PASTE: Mutex<Option<String>> = Mutex::new(None);
+
+/// Puts the spoken words on the clipboard once every paste path is finished
+/// with it (the latest restore happens within MAX_RESTORE_DELAY_MS).
+fn leave_original_on_clipboard(app_handle: &AppHandle, original: String) {
+    let app = app_handle.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(MAX_RESTORE_DELAY_MS + 500));
+        if let Err(e) = write_text_to_clipboard(&app, &original) {
+            log::warn!("Could not put the original words on the clipboard: {e}");
+        }
+    });
+}
+
 fn paste_via_clipboard(
     text: &str,
     app_handle: &AppHandle,
@@ -902,6 +919,20 @@ fn copied_text(clipboard: Option<String>) -> Option<String> {
 
 pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
     let _paste = PASTE_LOCK.lock().unwrap_or_else(PoisonError::into_inner);
+    let original = ORIGINAL_AFTER_PASTE
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .take();
+    let result = paste_inner(text, &app_handle);
+    // A missed paste leaves the prompt on the clipboard for Cmd+V instead.
+    if let (Ok(()), Some(original)) = (&result, original) {
+        leave_original_on_clipboard(&app_handle, original);
+    }
+    result
+}
+
+fn paste_inner(text: String, app_handle: &AppHandle) -> Result<(), String> {
+    let app_handle = app_handle.clone();
     let settings = get_settings(&app_handle);
     let paste_method = settings.paste_method;
     // Long dictations need the clipboard a little longer to settle.

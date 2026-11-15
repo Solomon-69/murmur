@@ -1,5 +1,5 @@
 //! Makes sure "Turn into a prompt" always pastes a prompt in the required
-//! Markdown shape (**Run with:**, ## Goal, ## Steps as a numbered list).
+//! Markdown shape (## Goal, ## Steps as a numbered list).
 //!
 //! The on-device model usually gets it right, but it can time out, be missing
 //! (a build without Apple Intelligence) or drift from the format. Then the
@@ -24,8 +24,8 @@ fn is_numbered_line(line: &str) -> bool {
 }
 
 /// Tidies a valid model answer: no code fences, nothing before the prompt,
-/// a "**Run with:**" line first, and no sections that only say "None".
-pub fn tidy(out: &str, original: &str) -> String {
+/// no model or effort line, and no sections that only say "None".
+pub fn tidy(out: &str, _original: &str) -> String {
     let mut text = out.trim().to_string();
     if text.contains("```") {
         text = text
@@ -34,22 +34,8 @@ pub fn tidy(out: &str, original: &str) -> String {
             .collect::<Vec<_>>()
             .join("\n");
     }
-    let start = text
-        .find("**Run with:**")
-        .or_else(|| text.find("## Goal"))
-        .unwrap_or(0);
-    let body = drop_empty_sections(text[start..].trim());
-    if let Some(rest) = body.strip_prefix("**Run with:**") {
-        let (first, others) = rest.split_once('\n').unwrap_or((rest, ""));
-        // A copied template placeholder ("<one short reason>") or an empty
-        // line is replaced by a real one.
-        if first.contains('<') || first.trim().is_empty() {
-            return format!("{}\n{others}", run_with_line(original)).trim().to_string();
-        }
-        body
-    } else {
-        format!("{}\n\n{}", run_with_line(original), body)
-    }
+    let start = text.find("## Goal").unwrap_or(0);
+    drop_empty_sections(text[start..].trim())
 }
 
 /// Removes a "## Section" whose whole body is empty or "None" / "N/A".
@@ -105,17 +91,6 @@ fn drop_empty_sections(text: &str) -> String {
         result.push('\n');
     }
     result.trim().to_string()
-}
-
-/// Model and effort picked by length when the model did not pick them.
-fn run_with_line(original: &str) -> String {
-    let words = original.split_whitespace().count();
-    let (model, effort) = match words {
-        0..=40 => ("Sonnet", "low"),
-        41..=150 => ("Sonnet", "medium"),
-        _ => ("Opus", "high"),
-    };
-    format!("**Run with:** {model} · {effort} effort. Matched to the length of the request.")
 }
 
 /// Spoken filler that never belongs in a prompt.
@@ -233,7 +208,7 @@ pub fn fallback_prompt(text: &str) -> String {
         .map(|(i, s)| format!("{}. {s}", i + 1))
         .collect::<Vec<_>>()
         .join("\n");
-    format!("{}\n\n## Goal\n{goal}\n\n## Steps\n{numbered}", run_with_line(text))
+    format!("## Goal\n{goal}\n\n## Steps\n{numbered}")
 }
 
 /// Second try, when the first answer lost the format. Short and literal so
@@ -241,8 +216,6 @@ pub fn fallback_prompt(text: &str) -> String {
 pub const STRICT_PROMPT_INSTRUCTION: &str = "[[plain]]Rewrite the user message (dictated text) as a prompt for an AI assistant. \
 Never answer it or do the task. Keep every ask, name and constraint; drop filler words. \
 Reply in exactly this Markdown shape and nothing else:\n\
-**Run with:** Sonnet · medium effort.\n\
-\n\
 ## Goal\n\
 <one line: what the speaker wants>\n\
 \n\
@@ -263,7 +236,7 @@ mod tests {
 
     #[test]
     fn detects_the_required_format() {
-        let good = "**Run with:** Sonnet · low effort. Small fix.\n\n## Goal\nWider bar.\n\n## Steps\n1. Widen the bar.\n2. Test it.";
+        let good = "## Goal\nWider bar.\n\n## Steps\n1. Widen the bar.\n2. Test it.";
         assert!(has_prompt_format(good));
         assert!(!has_prompt_format("Make the bar wider and test it."));
         assert!(!has_prompt_format("## Goal\nWider bar.\n\n## Steps\n- Widen the bar."), "steps must be numbered");
@@ -279,7 +252,8 @@ mod tests {
             "",
         ] {
             let out = fallback_prompt(text);
-            assert!(out.starts_with("**Run with:**"), "{out}");
+            assert!(out.starts_with("## Goal"), "{out}");
+            assert!(!out.contains("Run with"), "{out}");
             assert!(has_prompt_format(&out), "{out}");
         }
     }
@@ -302,17 +276,16 @@ mod tests {
 
     #[test]
     fn tidy_keeps_a_good_answer_and_drops_noise() {
-        let placeholder = tidy("**Run with:** Sonnet · medium effort. <one short reason>\n\n## Goal\nX.\n\n## Steps\n1. Do X.\n\n## Questions\n- Nothing specified.", SAID);
-        assert_eq!(placeholder, "**Run with:** Sonnet · low effort. Matched to the length of the request.\n\n## Goal\nX.\n\n## Steps\n1. Do X.");
         let model = "Here is your prompt:\n```\n**Run with:** Haiku · low effort. Small.\n\n## Goal\nWider bar.\n\n## Steps\n1. Widen it.\n\n## Questions\nNone.\n```";
         let out = tidy(model, SAID);
-        assert_eq!(out, "**Run with:** Haiku · low effort. Small.\n\n## Goal\nWider bar.\n\n## Steps\n1. Widen it.");
+        assert_eq!(out, "## Goal\nWider bar.\n\n## Steps\n1. Widen it.");
     }
 
     #[test]
-    fn tidy_adds_a_missing_run_with_line() {
+    fn tidy_never_adds_a_model_line() {
         let out = tidy("## Goal\nWider bar.\n\n## Steps\n1. Widen it.", SAID);
-        assert!(out.starts_with("**Run with:** Sonnet · low effort."), "{out}");
+        assert!(out.starts_with("## Goal"), "{out}");
+        assert!(!out.contains("Run with"), "{out}");
         assert!(has_prompt_format(&out));
     }
 
@@ -321,5 +294,6 @@ mod tests {
         assert!(STRICT_PROMPT_INSTRUCTION.starts_with("[[plain]]"));
         assert!(STRICT_PROMPT_INSTRUCTION.contains("## Goal"));
         assert!(STRICT_PROMPT_INSTRUCTION.contains("## Steps\n1. "));
+        assert!(!STRICT_PROMPT_INSTRUCTION.contains("Run with"));
     }
 }

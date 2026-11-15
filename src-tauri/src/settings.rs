@@ -1295,9 +1295,15 @@ fn default_post_process_api_keys() -> SecretMap {
     SecretMap(map)
 }
 
+pub const GROQ_DEFAULT_MODEL_ID: &str = "openai/gpt-oss-20b";
+
 fn default_model_for_provider(provider_id: &str) -> String {
     if provider_id == APPLE_INTELLIGENCE_PROVIDER_ID {
         return APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string();
+    }
+    // Chosen for prompt mode and clean-up: free, fast, follows edits well.
+    if provider_id == "groq" {
+        return GROQ_DEFAULT_MODEL_ID.to_string();
     }
     String::new()
 }

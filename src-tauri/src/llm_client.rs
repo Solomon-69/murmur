@@ -67,6 +67,12 @@ fn reasoning_disable_params(provider: &PostProcessProvider) -> ReasoningParams {
             thinking: Some(serde_json::json!({ "type": "disabled" })),
             ..Default::default()
         }
+    } else if provider.id == "groq" {
+        // Groq's gpt-oss models take "low" | "medium" | "high", not "none".
+        ReasoningParams {
+            reasoning_effort: Some("low".to_string()),
+            ..Default::default()
+        }
     } else if provider.id == "openrouter" {
         // OpenRouter nested object; exclude:true also keeps reasoning text out
         // of the response so it can't pollute structured-output JSON parsing
