@@ -7,6 +7,10 @@ on:
   push:
     branches: [solomon, overnight-8-nov]
 
+env:
+  # Murmur Cloud relay address (cloud/README.md), baked into the app.
+  MURMUR_CLOUD_URL: ${{ vars.MURMUR_CLOUD_URL }}
+
 concurrency:
   group: solomon-build-${{ github.ref }}
   cancel-in-progress: true

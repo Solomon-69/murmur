@@ -159,6 +159,36 @@ pub fn make_prompt_fast(s: &settings::AppSettings, text: &str) -> String {
     make_prompt(text)
 }
 
+/// Murmur Cloud: the free relay that holds Murmur's Groq key, so prompt mode
+/// and clean-up are fast with no setup. Its address is set at build time.
+const MURMUR_CLOUD_URL: Option<&str> = option_env!("MURMUR_CLOUD_URL");
+const MURMUR_CLOUD_TOKEN: &str = "murmur-app-v1";
+
+/// The AI service the person set up themselves (with a key and a model).
+fn own_service(s: &settings::AppSettings) -> Option<(settings::PostProcessProvider, String, String)> {
+    let provider = s.active_post_process_provider()?.clone();
+    if provider.id == settings::APPLE_INTELLIGENCE_PROVIDER_ID {
+        return None;
+    }
+    let api_key = s.post_process_api_keys.get(&provider.id).cloned().unwrap_or_default();
+    let model = s.post_process_models.get(&provider.id).cloned().unwrap_or_default();
+    (!api_key.trim().is_empty() && !model.trim().is_empty()).then_some((provider, api_key, model))
+}
+
+fn cloud_service() -> Option<(settings::PostProcessProvider, String, String)> {
+    let base_url = MURMUR_CLOUD_URL.map(str::trim).filter(|u| u.starts_with("https://"))?;
+    let provider = settings::PostProcessProvider {
+        id: "murmur_cloud".to_string(),
+        label: "Murmur Cloud".to_string(),
+        base_url: format!("{}/v1", base_url.trim_end_matches('/')),
+        allow_base_url_edit: false,
+        models_endpoint: None,
+        supports_structured_output: false,
+        api_format: settings::PostProcessApiFormat::default(),
+    };
+    Some((provider, MURMUR_CLOUD_TOKEN.to_string(), settings::GROQ_DEFAULT_MODEL_ID.to_string()))
+}
+
 /// None when no online AI service is set up (or the on-device one is chosen).
 pub(crate) fn rewrite_via_api(
     s: &settings::AppSettings,
@@ -166,16 +196,12 @@ pub(crate) fn rewrite_via_api(
     text: &str,
     timeout_ms: u64,
 ) -> Option<Result<String, String>> {
-    let provider = s.active_post_process_provider()?.clone();
-    if provider.id == settings::APPLE_INTELLIGENCE_PROVIDER_ID {
-        return None;
-    }
-    let api_key = s.post_process_api_keys.get(&provider.id).cloned().unwrap_or_default();
-    let model = s.post_process_models.get(&provider.id).cloned().unwrap_or_default();
-    if api_key.trim().is_empty() || model.trim().is_empty() {
-        return None;
-    }
+    let (provider, api_key, model) = match own_service(s) {
+        Some(own) => own,
+        None => cloud_service()?,
+    };
     // Groq's gpt-oss and similar models think before answering; skip that.
+    // (Murmur Cloud sets this itself.)
     let disable_reasoning = matches!(provider.id.as_str(), "custom" | "openrouter" | "groq");
     let (system, text) = (system.to_string(), text.to_string());
     let (tx, rx) = mpsc::channel();
