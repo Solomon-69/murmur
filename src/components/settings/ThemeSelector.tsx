@@ -7,8 +7,8 @@ import {
   applyTheme,
   resolveTheme,
   THEME_OPTIONS,
-  type AppTheme,
 } from "@/lib/utils/theme";
+import type { Theme } from "@/bindings";
 
 interface ThemeSelectorProps {
   descriptionMode?: "inline" | "tooltip";
@@ -29,7 +29,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = React.memo(
     }));
 
     const handleChange = async (value: string) => {
-      const next = (value === "black" ? "dark" : value) as AppTheme;
+      const next = (value === "black" ? "dark" : value) as Theme;
       applyTheme(next);
       await updateSetting("black_theme", false);
       await updateSetting("theme", next);
