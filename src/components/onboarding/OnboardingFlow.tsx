@@ -11,6 +11,7 @@ import {
 import { usePermissions } from "./usePermissions";
 import type { ChineseScriptChoice } from "@/lib/utils/languageSuggestions";
 import { isChinese } from "@/lib/utils/languageSuggestions";
+import { Intro } from "./screens/Intro";
 import { Welcome } from "./screens/Welcome";
 import { Permissions } from "./screens/Permissions";
 import { Model } from "./screens/Model";
@@ -131,10 +132,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
   const step = steps.includes(store.step) ? store.step : steps[0];
   const progress = { index: steps.indexOf(step), count: steps.length };
   // Reaching returnTo ends the detour.
-  const go = (to: OnboardingStep) =>
+  const go = (to: OnboardingStep) => {
+    // Which way the next screen glides in (screenTransitions.css).
+    document.documentElement.dataset.odir =
+      STEP_ORDER.indexOf(to) < STEP_ORDER.indexOf(step) ? "back" : "fwd";
     store.set(
       to === store.returnTo ? { step: to, returnTo: null } : { step: to },
     );
+  };
   /** Next screen, or back to All set after a detour from its panel. */
   const onward = () => (store.returnTo ? go(store.returnTo) : next());
   const next = () => {
@@ -186,10 +191,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
   };
 
   switch (step) {
+    case "intro":
+      return <Intro progress={progress} onContinue={next} />;
     case "welcome":
       return (
         <Welcome
           progress={progress}
+          onBack={back}
           onContinue={() => {
             saveLanguages();
             onward();

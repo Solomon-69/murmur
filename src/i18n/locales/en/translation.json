@@ -94,6 +94,29 @@
       "continue": "Continue",
       "progress": "Step {{step}} of {{count}}"
     },
+    "intro": {
+      "title": "Talk, and murmur types it for you",
+      "subtitle": "A free voice-to-text app that works in every app on your computer",
+      "start": "Get started",
+      "features": {
+        "shortcut": {
+          "title": "One shortcut",
+          "body": "Hold a key and speak, or tap to start and stop"
+        },
+        "anywhere": {
+          "title": "Works in any app",
+          "body": "Your words are typed where your cursor is"
+        },
+        "private": {
+          "title": "Private by design",
+          "body": "Speech is turned into text on your computer, never sent away"
+        },
+        "languages": {
+          "title": "About 100 languages",
+          "body": "Pick the ones you speak on the next screen"
+        }
+      }
+    },
     "welcome": {
       "title": "Speak instead of typing, in any app",
       "subtitle": "Pick the languages you will dictate in",

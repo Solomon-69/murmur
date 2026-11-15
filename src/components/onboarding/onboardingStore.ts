@@ -7,6 +7,7 @@ import {
 } from "@/lib/utils/languageSuggestions";
 
 export type OnboardingStep =
+  | "intro"
   | "welcome"
   | "permissions"
   | "model"
@@ -15,6 +16,7 @@ export type OnboardingStep =
   | "done";
 
 export const STEP_ORDER: OnboardingStep[] = [
+  "intro",
   "welcome",
   "permissions",
   "model",
@@ -60,7 +62,7 @@ interface OnboardingState extends Persisted {
 const STORAGE_KEY = "murmur.onboarding";
 
 const fresh = (): Persisted => ({
-  step: "welcome",
+  step: "intro",
   languages: suggestedLanguages(),
   script: suggestedScript(),
   modelId: null,

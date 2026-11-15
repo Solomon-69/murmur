@@ -24,11 +24,12 @@ let waved = false;
 
 interface WelcomeProps {
   progress: { index: number; count: number };
+  onBack?: () => void;
   onContinue: () => void;
 }
 
 /** Screen 1: greeting, spoken languages, and Chinese script. */
-export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
+export const Welcome: React.FC<WelcomeProps> = ({ progress, onBack, onContinue }) => {
   const { t, i18n } = useTranslation();
   const { updateSetting } = useSettings();
   const { languages, script, modelId, preview, set } = useOnboardingStore();
@@ -78,6 +79,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
   return (
     <OnboardingShell
       progress={progress}
+      onBack={onBack}
       pill={<AppLanguageMenu value={uiLanguage} onChange={changeUiLanguage} />}
       hint={hint}
       hintTone={weak.length ? "warning" : "quiet"}

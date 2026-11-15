@@ -117,3 +117,57 @@ html[data-sflow="in"] .try-glove .animate-wave {
     transform: translateY(12px);
   }
 }
+
+/* Every screen glides in: forward from the right, back from the left
+   (html[data-odir], set by OnboardingFlow). Off during the Demo ↔ Try it zoom. */
+[data-onboarding] .screen-in {
+  animation: ob-screen-in 0.42s var(--ease-glide) both;
+}
+html[data-odir="back"] [data-onboarding] .screen-in {
+  animation-name: ob-screen-back;
+}
+html[data-sflow] [data-onboarding] .screen-in {
+  animation: none;
+}
+@keyframes ob-screen-in {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+    filter: blur(3px);
+  }
+}
+@keyframes ob-screen-back {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+    filter: blur(3px);
+  }
+}
+
+/* Intro: logo, header, then the feature cards rise in one after another. */
+[data-onboarding] .intro-in {
+  animation: ob-rise 0.6s var(--ease-glide) both;
+}
+@keyframes ob-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+    filter: blur(4px);
+  }
+}
+[data-onboarding] .intro-card {
+  transition:
+    border-color 0.2s ease,
+    transform 0.25s var(--ease-glide),
+    background-color 0.2s ease;
+}
+[data-onboarding] .intro-card:hover {
+  border-color: var(--color-line-strong);
+  transform: translateY(-2px);
+}
+[data-onboarding] .intro-card:hover .intro-icon {
+  transform: scale(1.06) rotate(-4deg);
+}
+[data-onboarding] .intro-icon {
+  transition: transform 0.3s var(--ease-glide);
+}

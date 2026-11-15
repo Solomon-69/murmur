@@ -64,7 +64,7 @@ export const OnboardingShell: React.FC<OnboardingShellProps> = ({
           )}
           {pill}
         </div>
-        <div className="min-h-0">{children}</div>
+        <div className="screen-in min-h-0">{children}</div>
         <div className="flex items-center justify-between gap-[16px] px-[28px] pb-[4px]">
           {left ??
             (onBack ? (
