@@ -1,22 +1,24 @@
 import React from "react";
-import MurmurMascot from "../icons/MurmurMascot";
+import appIcon from "@/assets/app-icon.png";
 
 interface MascotProps {
   /** Height in px. */
   size: number;
-  /** Wave once on arrival, or high-five (re-key it to play again). */
+  /** Rise in once on arrival, or bounce (re-key it to play again). */
   animation?: "wave" | "slap" | null;
 }
 
-// The design's 357×400 image box, kept so sizes and the wave's pivot match it.
-const BOX_ASPECT = 357 / 400;
-
-/** murmur's mascot glove, optionally animated. */
+/** murmur's brand mark: the app icon (white sound wave on a dark tile). */
 export const Mascot: React.FC<MascotProps> = ({ size, animation = null }) => (
   <span
-    style={{ width: size * BOX_ASPECT, height: size }}
-    className={`relative block origin-[50%_90%] rotate-[-8deg] select-none ${animation === "wave" ? "animate-wave" : animation === "slap" ? "animate-slap" : ""}`}
+    style={{ width: size, height: size }}
+    className={`relative block select-none ${animation === "wave" ? "animate-rise" : animation === "slap" ? "animate-slap" : ""}`}
   >
-    <MurmurMascot className="absolute start-[12.6%] top-[7.25%] h-[85.25%] w-auto" />
+    <img
+      src={appIcon}
+      alt=""
+      draggable={false}
+      className="block size-full drop-shadow-[0_6px_14px_rgba(0,0,0,0.18)]"
+    />
   </span>
 );
