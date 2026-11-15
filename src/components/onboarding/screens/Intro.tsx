@@ -31,8 +31,8 @@ export const Intro: React.FC<IntroProps> = ({ progress, onContinue }) => {
       }
     >
       <div className="flex h-full min-h-0 flex-col items-center px-[28px] pt-[8px] pb-[10px] text-center">
-        <div className="intro-in flex items-center gap-[14px] leading-none">
-          <Mascot size={68} animation="wave" />
+        <div className="intro-in flex items-center gap-[12px] leading-none">
+          <Mascot size={46} animation="wave" />
           <MurmurTextLogo width={168} className="block" />
         </div>
         <h1

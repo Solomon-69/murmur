@@ -12,13 +12,13 @@ interface MascotProps {
 export const Mascot: React.FC<MascotProps> = ({ size, animation = null }) => (
   <span
     style={{ width: size, height: size }}
-    className={`relative block select-none ${animation === "wave" ? "animate-rise" : animation === "slap" ? "animate-slap" : ""}`}
+    className={`relative block overflow-hidden rounded-[30%] shadow-[0_4px_12px_rgba(0,0,0,0.16)] select-none ${animation === "wave" ? "animate-rise" : animation === "slap" ? "animate-slap" : ""}`}
   >
     <img
       src={appIcon}
       alt=""
       draggable={false}
-      className="block size-full drop-shadow-[0_6px_14px_rgba(0,0,0,0.18)]"
+      className="block size-full"
     />
   </span>
 );
