@@ -1,4 +1,5 @@
 import React from "react";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 /** Hairline so very pale swatches keep an edge on a light card. */
 const HAIRLINE =
@@ -25,20 +26,29 @@ interface ColorSwatchProps
 export const ColorSwatch = React.forwardRef<
   HTMLButtonElement,
   ColorSwatchProps
->(({ fill, selected, ring = "light", style, className = "", ...rest }, ref) => (
-  <button
-    ref={ref}
-    type="button"
-    {...rest}
-    className={`relative h-7 w-7 shrink-0 cursor-pointer rounded-full outline-none hover:scale-[1.06] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-logo-primary/60 motion-reduce:transition-none! motion-reduce:hover:scale-100 motion-reduce:active:scale-100 ${className}`}
-    style={{
-      background: fill,
-      boxShadow: selected ? (ring === "dark" ? RING_DARK : RING) : HAIRLINE,
-      transition: `box-shadow 160ms ease-out, scale 200ms ${GLIDE}`,
-      ...style,
-    }}
-  />
-));
+>(
+  (
+    { fill, selected, ring = "light", style, className = "", title, ...rest },
+    ref,
+  ) => {
+    const button = (
+      <button
+        ref={ref}
+        type="button"
+        {...rest}
+        className={`relative h-7 w-7 shrink-0 cursor-pointer rounded-full outline-none hover:scale-[1.06] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-logo-primary/60 motion-reduce:transition-none! motion-reduce:hover:scale-100 motion-reduce:active:scale-100 ${className}`}
+        style={{
+          background: fill,
+          boxShadow: selected ? (ring === "dark" ? RING_DARK : RING) : HAIRLINE,
+          transition: `box-shadow 160ms ease-out, scale 200ms ${GLIDE}`,
+          ...style,
+        }}
+      />
+    );
+    // The colour's name shows in the app's own tooltip, not the system one.
+    return title ? <Tooltip text={title}>{button}</Tooltip> : button;
+  },
+);
 ColorSwatch.displayName = "ColorSwatch";
 
 /** Swatch preview colours for the clear glass row (not what the bar renders). */

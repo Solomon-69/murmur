@@ -41,7 +41,9 @@ pub fn word_count(text: &str) -> u32 {
 
 pub fn compute(samples: &[StatsSample], now: DateTime<FixedOffset>) -> UsageStats {
     let week_start = (now - Duration::days(WEEK_DAYS)).timestamp();
-    let total_words = samples.iter().fold(0u32, |sum, s| sum.saturating_add(s.words));
+    let total_words = samples
+        .iter()
+        .fold(0u32, |sum, s| sum.saturating_add(s.words));
     let words_this_week = samples
         .iter()
         .filter(|s| s.timestamp > week_start && s.timestamp <= now.timestamp())
@@ -58,7 +60,11 @@ pub fn compute(samples: &[StatsSample], now: DateTime<FixedOffset>) -> UsageStat
 fn words_per_minute(samples: &[StatsSample]) -> Option<u32> {
     let (words, secs) = samples
         .iter()
-        .filter_map(|s| s.audio_secs.filter(|a| *a >= MIN_AUDIO_SECS).map(|a| (s.words, a)))
+        .filter_map(|s| {
+            s.audio_secs
+                .filter(|a| *a >= MIN_AUDIO_SECS)
+                .map(|a| (s.words, a))
+        })
         .fold((0f64, 0f64), |(w, t), (sw, st)| (w + f64::from(sw), t + st));
     if secs <= 0.0 {
         return None;
@@ -128,7 +134,11 @@ mod tests {
 
     #[test]
     fn counts_total_and_this_week() {
-        let samples = [sample(0, 10, None), sample(6, 5, None), sample(8, 100, None)];
+        let samples = [
+            sample(0, 10, None),
+            sample(6, 5, None),
+            sample(8, 100, None),
+        ];
         let stats = compute(&samples, now());
         assert_eq!(stats.total_words, 115);
         assert_eq!(stats.words_this_week, 15);
@@ -149,7 +159,12 @@ mod tests {
 
     #[test]
     fn streak_counts_days_in_a_row() {
-        let samples = [sample(0, 1, None), sample(1, 1, None), sample(2, 1, None), sample(4, 1, None)];
+        let samples = [
+            sample(0, 1, None),
+            sample(1, 1, None),
+            sample(2, 1, None),
+            sample(4, 1, None),
+        ];
         assert_eq!(compute(&samples, now()).day_streak, 3);
     }
 

@@ -87,29 +87,102 @@ const PEOPLE_APPS: &[&str] = &[
 ];
 
 const TASK_VERBS: &[&str] = &[
-    "build", "write", "make", "fix", "create", "generate", "implement", "refactor",
-    "add", "explain", "summarize", "summarise", "design", "rewrite", "translate",
-    "analyze", "analyse", "debug", "list", "draft", "find", "research", "update",
-    "change", "remove", "convert", "review", "test", "check", "improve", "move",
-    "rename", "install", "run",
+    "build",
+    "write",
+    "make",
+    "fix",
+    "create",
+    "generate",
+    "implement",
+    "refactor",
+    "add",
+    "explain",
+    "summarize",
+    "summarise",
+    "design",
+    "rewrite",
+    "translate",
+    "analyze",
+    "analyse",
+    "debug",
+    "list",
+    "draft",
+    "find",
+    "research",
+    "update",
+    "change",
+    "remove",
+    "convert",
+    "review",
+    "test",
+    "check",
+    "improve",
+    "move",
+    "rename",
+    "install",
+    "run",
 ];
 
 const AI_ADDRESS: &[&str] = &[
-    "i want you to", "i need you to", "can you", "could you", "please",
-    "you should", "you are a", "act as", "your task", "make sure you",
-    "make sure that", "don't forget to", "do not", "i'd like you to",
+    "i want you to",
+    "i need you to",
+    "can you",
+    "could you",
+    "please",
+    "you should",
+    "you are a",
+    "act as",
+    "your task",
+    "make sure you",
+    "make sure that",
+    "don't forget to",
+    "do not",
+    "i'd like you to",
 ];
 
 const SPEC_WORDS: &[&str] = &[
-    "must", "should", "requirements", "format", "steps", "step", "using",
-    "function", "file", "code", "app", "component", "feature", "output",
-    "example", "markdown", "table", "bullet", "screen", "button", "api",
+    "must",
+    "should",
+    "requirements",
+    "format",
+    "steps",
+    "step",
+    "using",
+    "function",
+    "file",
+    "code",
+    "app",
+    "component",
+    "feature",
+    "output",
+    "example",
+    "markdown",
+    "table",
+    "bullet",
+    "screen",
+    "button",
+    "api",
 ];
 
 const CHAT_MARKERS: &[&str] = &[
-    "hi ", "hey ", "hello ", "dear ", "thanks", "thank you", "lol", "haha",
-    "love you", "miss you", "best regards", "kind regards", "cheers",
-    "yesterday", "last night", "how are you", "see you", "talk soon",
+    "hi ",
+    "hey ",
+    "hello ",
+    "dear ",
+    "thanks",
+    "thank you",
+    "lol",
+    "haha",
+    "love you",
+    "miss you",
+    "best regards",
+    "kind regards",
+    "cheers",
+    "yesterday",
+    "last night",
+    "how are you",
+    "see you",
+    "talk soon",
 ];
 
 fn words(text: &str) -> Vec<String> {
@@ -138,7 +211,11 @@ pub fn wording_score(text: &str) -> i32 {
         score += 2;
     }
     // Several asks in one dictation ("fix..., add..., test...") reads as a prompt.
-    if w.iter().filter(|x| TASK_VERBS.contains(&x.as_str())).count() >= 3 {
+    if w.iter()
+        .filter(|x| TASK_VERBS.contains(&x.as_str()))
+        .count()
+        >= 3
+    {
         score += 2;
     }
     if AI_ADDRESS.iter().any(|p| lower.contains(&format!(" {p} "))) {
@@ -180,7 +257,11 @@ pub fn detect(text: &str, bundle_id: Option<&str>) -> Detected {
     if n < MIN_WORDS {
         return Detected::Normal;
     }
-    let needed = if in_ai_app { THRESHOLD_AI_APP } else { THRESHOLD_OTHER_APP };
+    let needed = if in_ai_app {
+        THRESHOLD_AI_APP
+    } else {
+        THRESHOLD_OTHER_APP
+    };
     if score >= needed {
         Detected::Prompt
     } else {
@@ -213,7 +294,10 @@ mod tests {
     #[test]
     fn never_rewrites_in_mail_or_chat_apps() {
         assert_eq!(detect(PROMPT, MAIL), Detected::Normal);
-        assert_eq!(detect(PROMPT, Some("com.tinyspeck.slackmacgap")), Detected::Normal);
+        assert_eq!(
+            detect(PROMPT, Some("com.tinyspeck.slackmacgap")),
+            Detected::Normal
+        );
     }
 
     #[test]
@@ -249,9 +333,19 @@ mod tests {
             spoken_trigger("Make this a prompt. Fix the login bug and add tests").as_deref(),
             Some("Fix the login bug and add tests")
         );
-        assert_eq!(spoken_trigger("prompt engineer this please, build a timer app").as_deref(), Some("build a timer app"));
-        assert_eq!(spoken_trigger("I wrote a prompt for the team yesterday"), None);
-        assert_eq!(spoken_trigger("turn this into a prompt"), None, "nothing left to rewrite");
+        assert_eq!(
+            spoken_trigger("prompt engineer this please, build a timer app").as_deref(),
+            Some("build a timer app")
+        );
+        assert_eq!(
+            spoken_trigger("I wrote a prompt for the team yesterday"),
+            None
+        );
+        assert_eq!(
+            spoken_trigger("turn this into a prompt"),
+            None,
+            "nothing left to rewrite"
+        );
     }
 
     #[test]

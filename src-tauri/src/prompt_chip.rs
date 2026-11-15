@@ -77,7 +77,12 @@ pub fn resolve(app: &AppHandle, text: String) -> String {
         Some(rest) if s.prompt_chip_mode == PromptChipMode::Ask => (rest, ChipDecision::Ask),
         Some(rest) => (rest, ChipDecision::RewriteNow),
         None => {
-            let d = decide(s.prompt_chip_mode, s.prompt_chip_min_words, &text, app_id.as_deref());
+            let d = decide(
+                s.prompt_chip_mode,
+                s.prompt_chip_min_words,
+                &text,
+                app_id.as_deref(),
+            );
             (text, d)
         }
     };
@@ -101,13 +106,21 @@ pub fn resolve(app: &AppHandle, text: String) -> String {
         let _ = app.emit_to("recording_overlay", "prompt-chip-done", ());
         return text;
     }
-    let kind = if choice == Choice::CleanUp { "clean" } else { "prompt" };
+    let kind = if choice == Choice::CleanUp {
+        "clean"
+    } else {
+        "prompt"
+    };
     // "Prompting" stays on the bar for the whole rewrite, retry included.
     let _ = app.emit_to("recording_overlay", "prompt-chip-working", kind);
     let out = if choice == Choice::TurnIntoPrompt {
         Ok(make_prompt_fast(&s, &text))
     } else {
-        let system = format!("{}\n\n{}", crate::smart_fix::INSTRUCTION, cleanup_instruction(&s));
+        let system = format!(
+            "{}\n\n{}",
+            crate::smart_fix::INSTRUCTION,
+            cleanup_instruction(&s)
+        );
         rewrite_via_api(&s, &system, &text, API_PROMPT_TIMEOUT_MS)
             .and_then(Result::ok)
             .filter(|o| !o.trim().is_empty())
@@ -152,7 +165,9 @@ pub fn make_prompt_fast(s: &settings::AppSettings, text: &str) -> String {
             log::info!("prompt rewrite: online AI ok in {:?}", started.elapsed());
             return tidy(&out, text);
         }
-        Some(Ok(_)) => log::warn!("prompt rewrite: online AI answer lacked the format; using on-device"),
+        Some(Ok(_)) => {
+            log::warn!("prompt rewrite: online AI answer lacked the format; using on-device")
+        }
         Some(Err(err)) => log::warn!("prompt rewrite: online AI failed ({err}); using on-device"),
         None => {}
     }
@@ -165,18 +180,30 @@ const MURMUR_CLOUD_URL: Option<&str> = option_env!("MURMUR_CLOUD_URL");
 const MURMUR_CLOUD_TOKEN: &str = "murmur-app-v1";
 
 /// The AI service the person set up themselves (with a key and a model).
-fn own_service(s: &settings::AppSettings) -> Option<(settings::PostProcessProvider, String, String)> {
+fn own_service(
+    s: &settings::AppSettings,
+) -> Option<(settings::PostProcessProvider, String, String)> {
     let provider = s.active_post_process_provider()?.clone();
     if provider.id == settings::APPLE_INTELLIGENCE_PROVIDER_ID {
         return None;
     }
-    let api_key = s.post_process_api_keys.get(&provider.id).cloned().unwrap_or_default();
-    let model = s.post_process_models.get(&provider.id).cloned().unwrap_or_default();
+    let api_key = s
+        .post_process_api_keys
+        .get(&provider.id)
+        .cloned()
+        .unwrap_or_default();
+    let model = s
+        .post_process_models
+        .get(&provider.id)
+        .cloned()
+        .unwrap_or_default();
     (!api_key.trim().is_empty() && !model.trim().is_empty()).then_some((provider, api_key, model))
 }
 
 fn cloud_service() -> Option<(settings::PostProcessProvider, String, String)> {
-    let base_url = MURMUR_CLOUD_URL.map(str::trim).filter(|u| u.starts_with("https://"))?;
+    let base_url = MURMUR_CLOUD_URL
+        .map(str::trim)
+        .filter(|u| u.starts_with("https://"))?;
     let provider = settings::PostProcessProvider {
         id: "murmur_cloud".to_string(),
         label: "Murmur Cloud".to_string(),
@@ -186,7 +213,11 @@ fn cloud_service() -> Option<(settings::PostProcessProvider, String, String)> {
         supports_structured_output: false,
         api_format: settings::PostProcessApiFormat::default(),
     };
-    Some((provider, MURMUR_CLOUD_TOKEN.to_string(), settings::GROQ_DEFAULT_MODEL_ID.to_string()))
+    Some((
+        provider,
+        MURMUR_CLOUD_TOKEN.to_string(),
+        settings::GROQ_DEFAULT_MODEL_ID.to_string(),
+    ))
 }
 
 /// None when no online AI service is set up (or the on-device one is chosen).
@@ -209,10 +240,17 @@ pub(crate) fn rewrite_via_api(
         let call = async {
             if provider.api_format == settings::PostProcessApiFormat::Anthropic {
                 let prompt = format!("{system}\n\nThe user message:\n{text}");
-                crate::llm_client::send_chat_completion(&provider, api_key, &model, prompt, false).await
+                crate::llm_client::send_chat_completion(&provider, api_key, &model, prompt, false)
+                    .await
             } else {
                 crate::llm_client::send_chat_completion_with_schema(
-                    &provider, api_key, &model, text, Some(system), None, disable_reasoning,
+                    &provider,
+                    api_key,
+                    &model,
+                    text,
+                    Some(system),
+                    None,
+                    disable_reasoning,
                 )
                 .await
             }
@@ -232,7 +270,9 @@ pub(crate) fn rewrite_via_api(
 /// the model's answer when it has "## Goal" and numbered "## Steps", else one
 /// stricter retry, else a prompt built from the text itself.
 pub fn make_prompt(text: &str) -> String {
-    use crate::prompt_format::{fallback_prompt, has_prompt_format, tidy, STRICT_PROMPT_INSTRUCTION};
+    use crate::prompt_format::{
+        fallback_prompt, has_prompt_format, tidy, STRICT_PROMPT_INSTRUCTION,
+    };
     let started = std::time::Instant::now();
     match rewrite_with_timeout(PROMPT_REWRITE_INSTRUCTION, text, PROMPT_TIMEOUT_MS) {
         Ok(out) if has_prompt_format(&out) => {
@@ -257,7 +297,9 @@ pub fn make_prompt(text: &str) -> String {
         other => {
             log::warn!(
                 "prompt rewrite: strict retry unusable ({}); building the prompt from the text",
-                other.err().unwrap_or_else(|| "no ## Goal / ## Steps".to_string())
+                other
+                    .err()
+                    .unwrap_or_else(|| "no ## Goal / ## Steps".to_string())
             );
             fallback_prompt(text)
         }
@@ -421,21 +463,36 @@ mod tests {
     #[test]
     fn off_never_asks() {
         let long = "word ".repeat(500);
-        assert_eq!(decide(PromptChipMode::Off, 40, &long, None), ChipDecision::Paste);
+        assert_eq!(
+            decide(PromptChipMode::Off, 40, &long, None),
+            ChipDecision::Paste
+        );
     }
 
     #[test]
     fn short_dictations_paste_straight_away() {
         let short = "word ".repeat(39);
-        assert_eq!(decide(PromptChipMode::Ask, 40, &short, None), ChipDecision::Paste);
-        assert_eq!(decide(PromptChipMode::Always, 40, &short, None), ChipDecision::Paste);
+        assert_eq!(
+            decide(PromptChipMode::Ask, 40, &short, None),
+            ChipDecision::Paste
+        );
+        assert_eq!(
+            decide(PromptChipMode::Always, 40, &short, None),
+            ChipDecision::Paste
+        );
     }
 
     #[test]
     fn long_dictations_ask_or_rewrite() {
         let long = "word ".repeat(40);
-        assert_eq!(decide(PromptChipMode::Ask, 40, &long, None), ChipDecision::Ask);
-        assert_eq!(decide(PromptChipMode::Always, 40, &long, None), ChipDecision::RewriteNow);
+        assert_eq!(
+            decide(PromptChipMode::Ask, 40, &long, None),
+            ChipDecision::Ask
+        );
+        assert_eq!(
+            decide(PromptChipMode::Always, 40, &long, None),
+            ChipDecision::RewriteNow
+        );
     }
 
     #[test]
@@ -443,9 +500,18 @@ mod tests {
         let min = settings::get_default_settings().prompt_chip_min_words;
         assert_eq!(min, 12);
         let sentence = "please make the settings toggles slide smoothly and fix the dark colours";
-        assert_eq!(decide(PromptChipMode::Ask, min, sentence, None), ChipDecision::Ask);
-        assert_eq!(decide(PromptChipMode::Always, min, sentence, None), ChipDecision::RewriteNow);
-        assert_eq!(decide(PromptChipMode::Ask, min, "hello there", None), ChipDecision::Paste);
+        assert_eq!(
+            decide(PromptChipMode::Ask, min, sentence, None),
+            ChipDecision::Ask
+        );
+        assert_eq!(
+            decide(PromptChipMode::Always, min, sentence, None),
+            ChipDecision::RewriteNow
+        );
+        assert_eq!(
+            decide(PromptChipMode::Ask, min, "hello there", None),
+            ChipDecision::Paste
+        );
     }
 
     #[test]
@@ -455,9 +521,18 @@ mod tests {
             then add a section for notifications with three options, keep the spacing the same as the other pages, \
             write tests for each option and fix anything that breaks before you finish the change";
         let claude = Some("com.anthropic.claudefordesktop");
-        assert_eq!(decide(PromptChipMode::Smart, 40, prompt, claude), ChipDecision::RewriteNow);
-        assert_eq!(decide(PromptChipMode::Smart, 40, prompt, Some("com.apple.mail")), ChipDecision::Paste);
-        assert_eq!(decide(PromptChipMode::Smart, 40, "hello there", claude), ChipDecision::Paste);
+        assert_eq!(
+            decide(PromptChipMode::Smart, 40, prompt, claude),
+            ChipDecision::RewriteNow
+        );
+        assert_eq!(
+            decide(PromptChipMode::Smart, 40, prompt, Some("com.apple.mail")),
+            ChipDecision::Paste
+        );
+        assert_eq!(
+            decide(PromptChipMode::Smart, 40, "hello there", claude),
+            ChipDecision::Paste
+        );
     }
 
     #[test]

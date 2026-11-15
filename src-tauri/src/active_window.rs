@@ -137,10 +137,18 @@ mod mac {
         let mut pos = CGPoint::default();
         let mut size = CGSize::default();
         let ok_pos = unsafe {
-            AXValueGetValue(pos_val.0, AX_VALUE_CGPOINT, &mut pos as *mut _ as *mut c_void)
+            AXValueGetValue(
+                pos_val.0,
+                AX_VALUE_CGPOINT,
+                &mut pos as *mut _ as *mut c_void,
+            )
         };
         let ok_size = unsafe {
-            AXValueGetValue(size_val.0, AX_VALUE_CGSIZE, &mut size as *mut _ as *mut c_void)
+            AXValueGetValue(
+                size_val.0,
+                AX_VALUE_CGSIZE,
+                &mut size as *mut _ as *mut c_void,
+            )
         };
         (ok_pos && ok_size).then(|| Rect::new(pos.x, pos.y, size.width, size.height))
     }

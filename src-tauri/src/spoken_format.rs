@@ -38,13 +38,34 @@ fn trailing_punct(word: &str) -> &str {
 
 fn unit(word: &str) -> Option<u64> {
     let v = match word {
-        "zero" => 0, "one" => 1, "two" => 2, "three" => 3, "four" => 4,
-        "five" => 5, "six" => 6, "seven" => 7, "eight" => 8, "nine" => 9,
-        "ten" => 10, "eleven" => 11, "twelve" => 12, "thirteen" => 13,
-        "fourteen" => 14, "fifteen" => 15, "sixteen" => 16, "seventeen" => 17,
-        "eighteen" => 18, "nineteen" => 19, "twenty" => 20, "thirty" => 30,
-        "forty" => 40, "fifty" => 50, "sixty" => 60, "seventy" => 70,
-        "eighty" => 80, "ninety" => 90,
+        "zero" => 0,
+        "one" => 1,
+        "two" => 2,
+        "three" => 3,
+        "four" => 4,
+        "five" => 5,
+        "six" => 6,
+        "seven" => 7,
+        "eight" => 8,
+        "nine" => 9,
+        "ten" => 10,
+        "eleven" => 11,
+        "twelve" => 12,
+        "thirteen" => 13,
+        "fourteen" => 14,
+        "fifteen" => 15,
+        "sixteen" => 16,
+        "seventeen" => 17,
+        "eighteen" => 18,
+        "nineteen" => 19,
+        "twenty" => 20,
+        "thirty" => 30,
+        "forty" => 40,
+        "fifty" => 50,
+        "sixty" => 60,
+        "seventy" => 70,
+        "eighty" => 80,
+        "ninety" => 90,
         _ => return None,
     };
     Some(v)
@@ -68,7 +89,9 @@ fn parse_number(words: &[String], i: usize) -> Option<(u64, usize)> {
         let parts: Vec<&str> = raw.split('-').collect();
         if parts.iter().all(|p| unit(p).is_some()) && !raw.is_empty() {
             current += parts.iter().filter_map(|p| unit(p)).sum::<u64>();
-        } else if raw == "and" && saw_number && i + used + 1 < words.len()
+        } else if raw == "and"
+            && saw_number
+            && i + used + 1 < words.len()
             && unit(&norm(&words[i + used + 1])).is_some()
         {
             // "one hundred and five"
@@ -115,12 +138,17 @@ fn convert_numbers(words: Vec<String>) -> Vec<String> {
 }
 
 fn match_punct(words: &[String], i: usize) -> Option<(&'static str, bool, bool, usize)> {
-    PUNCTUATION.iter().find_map(|(phrase, sym, join_prev, join_next)| {
-        let parts: Vec<&str> = phrase.split(' ').collect();
-        let fits = i + parts.len() <= words.len()
-            && parts.iter().enumerate().all(|(k, p)| norm(&words[i + k]) == *p);
-        fits.then_some((*sym, *join_prev, *join_next, parts.len()))
-    })
+    PUNCTUATION
+        .iter()
+        .find_map(|(phrase, sym, join_prev, join_next)| {
+            let parts: Vec<&str> = phrase.split(' ').collect();
+            let fits = i + parts.len() <= words.len()
+                && parts
+                    .iter()
+                    .enumerate()
+                    .all(|(k, p)| norm(&words[i + k]) == *p);
+            fits.then_some((*sym, *join_prev, *join_next, parts.len()))
+        })
 }
 
 /// "slash" only becomes "/" when a word follows straight after it
@@ -149,8 +177,8 @@ pub fn apply(text: &str) -> String {
     let mut cap_next = false;
     let mut i = 0;
     while i < words.len() {
-        if let Some((sym, join_prev, join_next, used)) = match_punct(&words, i)
-            .filter(|(sym, _, _, used)| {
+        if let Some((sym, join_prev, join_next, used)) =
+            match_punct(&words, i).filter(|(sym, _, _, used)| {
                 *sym != "/"
                     || (trailing_punct(&words[i + used - 1]).is_empty()
                         && slash_has_word_after(&words, i + used))
@@ -171,7 +199,11 @@ pub fn apply(text: &str) -> String {
             continue;
         }
         let word = words[i].trim_start_matches([',', '.']);
-        let word = if cap_next { capitalize(word) } else { word.to_string() };
+        let word = if cap_next {
+            capitalize(word)
+        } else {
+            word.to_string()
+        };
         if !out.is_empty() && !glue_next {
             out.push(' ');
         }
@@ -189,7 +221,10 @@ mod tests {
 
     #[test]
     fn spoken_punctuation_becomes_symbols() {
-        assert_eq!(apply("Hello comma how are you question mark"), "Hello, how are you?");
+        assert_eq!(
+            apply("Hello comma how are you question mark"),
+            "Hello, how are you?"
+        );
         assert_eq!(apply("It's done full stop thanks"), "It's done. Thanks");
         assert_eq!(apply("and slash or"), "and /or");
         assert_eq!(apply("use the slash prompt skill"), "use the /prompt skill");
@@ -201,7 +236,10 @@ mod tests {
     #[test]
     fn numbers_ten_and_up_become_digits() {
         assert_eq!(apply("I need twenty five apples"), "I need 25 apples");
-        assert_eq!(apply("about one hundred and five people"), "about 105 people");
+        assert_eq!(
+            apply("about one hundred and five people"),
+            "about 105 people"
+        );
         assert_eq!(apply("two thousand twenty six"), "2026");
         assert_eq!(apply("I have two cats"), "I have two cats");
         assert_eq!(apply("twenty-one"), "21");

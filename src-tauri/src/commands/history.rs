@@ -163,13 +163,15 @@ pub async fn get_usage_stats(
     let samples: Vec<crate::usage_stats::StatsSample> = rows
         .iter()
         .enumerate()
-        .map(|(i, (timestamp, text, file_name))| crate::usage_stats::StatsSample {
-            timestamp: *timestamp,
-            words: crate::usage_stats::word_count(text),
-            audio_secs: (i < MAX_STATS_RECORDINGS)
-                .then(|| recording_secs(&history_manager.get_audio_file_path(file_name)))
-                .flatten(),
-        })
+        .map(
+            |(i, (timestamp, text, file_name))| crate::usage_stats::StatsSample {
+                timestamp: *timestamp,
+                words: crate::usage_stats::word_count(text),
+                audio_secs: (i < MAX_STATS_RECORDINGS)
+                    .then(|| recording_secs(&history_manager.get_audio_file_path(file_name)))
+                    .flatten(),
+            },
+        )
         .collect();
     Ok(crate::usage_stats::compute(
         &samples,

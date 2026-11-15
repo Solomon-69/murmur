@@ -668,6 +668,12 @@ pub struct AppSettings {
         deserialize_with = "deserialize_overlay_accent"
     )]
     pub overlay_accent: String,
+    /// Colour of the main app window and Dock icon. "same" follows the bar colour.
+    #[serde(
+        default = "default_app_accent",
+        deserialize_with = "deserialize_app_accent"
+    )]
+    pub app_accent: String,
     /// Bar opacity, 0.4 to 1.0.
     #[serde(default = "default_overlay_opacity")]
     pub overlay_opacity: f64,
@@ -760,6 +766,30 @@ pub fn normalize_overlay_accent(value: &str) -> String {
     }
 }
 
+/// The app colour actually in use: the app's own pick, or the bar's when "same".
+pub fn effective_app_accent(settings: &AppSettings) -> &str {
+    if settings.app_accent == APP_ACCENT_SAME {
+        &settings.overlay_accent
+    } else {
+        &settings.app_accent
+    }
+}
+
+pub const APP_ACCENT_SAME: &str = "same";
+
+fn deserialize_app_accent<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    let v = value.as_str().unwrap_or("");
+    Ok(if OVERLAY_ACCENTS.contains(&v) {
+        v.to_string()
+    } else {
+        default_app_accent()
+    })
+}
+
 /// Lenient loader for `overlay_accent`: never fails the whole settings parse
 /// because of an old or odd accent value.
 fn deserialize_overlay_accent<'de, D>(deserializer: D) -> Result<String, D::Error>
@@ -826,6 +856,12 @@ pub fn apply_appearance_setting(
                 return Err(format!("Unknown accent '{value}'"));
             }
             settings.overlay_accent = value.to_string();
+        }
+        "app_accent" => {
+            if value != APP_ACCENT_SAME && !OVERLAY_ACCENTS.contains(&value) {
+                return Err(format!("Unknown accent '{value}'"));
+            }
+            settings.app_accent = value.to_string();
         }
         "overlay_opacity" => settings.overlay_opacity = parse_f64(value)?.clamp(0.4, 1.0),
         "overlay_glass" => {
@@ -931,6 +967,11 @@ mod appearance_tests {
         let before = s.clone();
         assert!(apply_appearance_setting(&mut s, "overlay_accent", "neon").is_err());
         assert!(apply_appearance_setting(&mut s, "overlay_accent", "pink").is_err());
+        apply_appearance_setting(&mut s, "app_accent", "moss").unwrap();
+        assert_eq!(effective_app_accent(&s), "moss");
+        apply_appearance_setting(&mut s, "app_accent", "same").unwrap();
+        assert_eq!(effective_app_accent(&s), s.overlay_accent.as_str());
+        assert!(apply_appearance_setting(&mut s, "app_accent", "neon").is_err());
         assert!(apply_appearance_setting(&mut s, "overlay_opacity", "NaN").is_err());
         assert!(apply_appearance_setting(&mut s, "overlay_size", "huge").is_err());
         assert!(apply_appearance_setting(&mut s, "overlay_clear_tint", "navy").is_err());
@@ -987,6 +1028,10 @@ fn default_overlay_size() -> OverlaySize {
 
 fn default_overlay_accent() -> String {
     "default".to_string()
+}
+
+fn default_app_accent() -> String {
+    APP_ACCENT_SAME.to_string()
 }
 
 fn default_overlay_opacity() -> f64 {
@@ -1576,6 +1621,7 @@ pub fn get_default_settings() -> AppSettings {
         overlay_offset_x: 0.0,
         overlay_size: default_overlay_size(),
         overlay_accent: default_overlay_accent(),
+        app_accent: default_app_accent(),
         overlay_opacity: default_overlay_opacity(),
         overlay_glass: default_overlay_glass(),
         overlay_glass_tint: default_overlay_glass_tint(),
@@ -2498,11 +2544,21 @@ mod tests {
             b.current_binding = old.to_string();
             b.default_binding = "option+space".to_string();
             assert!(migrate_mac_transcribe_shortcut(&mut settings), "{old}");
-            assert_eq!(settings.bindings["transcribe"].current_binding, "ctrl+shift+space");
-            assert_eq!(settings.bindings["transcribe"].default_binding, "ctrl+shift+space");
+            assert_eq!(
+                settings.bindings["transcribe"].current_binding,
+                "ctrl+shift+space"
+            );
+            assert_eq!(
+                settings.bindings["transcribe"].default_binding,
+                "ctrl+shift+space"
+            );
         }
         // A shortcut the person chose is kept.
-        settings.bindings.get_mut("transcribe").unwrap().current_binding = "f13".to_string();
+        settings
+            .bindings
+            .get_mut("transcribe")
+            .unwrap()
+            .current_binding = "f13".to_string();
         assert!(!migrate_mac_transcribe_shortcut(&mut settings));
         assert_eq!(settings.bindings["transcribe"].current_binding, "f13");
     }
@@ -2511,15 +2567,24 @@ mod tests {
     #[test]
     fn mac_default_transcribe_shortcut_is_ctrl_shift_space() {
         let defaults = get_default_settings();
-        assert_eq!(defaults.bindings["transcribe"].current_binding, "ctrl+shift+space");
-        assert_eq!(defaults.bindings["transcribe"].default_binding, "ctrl+shift+space");
+        assert_eq!(
+            defaults.bindings["transcribe"].current_binding,
+            "ctrl+shift+space"
+        );
+        assert_eq!(
+            defaults.bindings["transcribe"].default_binding,
+            "ctrl+shift+space"
+        );
         let others: Vec<&str> = defaults
             .bindings
             .iter()
             .filter(|(id, _)| id.as_str() != "transcribe")
             .map(|(_, b)| b.current_binding.as_str())
             .collect();
-        assert!(!others.contains(&"ctrl+shift+space"), "clashes with another default");
+        assert!(
+            !others.contains(&"ctrl+shift+space"),
+            "clashes with another default"
+        );
     }
 
     #[cfg(target_os = "macos")]
@@ -2530,14 +2595,23 @@ mod tests {
         stored["bindings"]["transcribe"]["current_binding"] = serde_json::json!("option+space");
         let mut settings: AppSettings = serde_json::from_value(stored.clone()).unwrap();
         assert!(apply_settings_migrations(&mut settings, &stored));
-        assert_eq!(settings.bindings["transcribe"].current_binding, "ctrl+shift+space");
-        assert_eq!(settings.settings_schema_version, CURRENT_SETTINGS_SCHEMA_VERSION);
+        assert_eq!(
+            settings.bindings["transcribe"].current_binding,
+            "ctrl+shift+space"
+        );
+        assert_eq!(
+            settings.settings_schema_version,
+            CURRENT_SETTINGS_SCHEMA_VERSION
+        );
 
         // Already on schema 4: picking Option+Space again sticks.
         stored["settings_schema_version"] = serde_json::json!(CURRENT_SETTINGS_SCHEMA_VERSION);
         let mut settings: AppSettings = serde_json::from_value(stored.clone()).unwrap();
         apply_settings_migrations(&mut settings, &stored);
-        assert_eq!(settings.bindings["transcribe"].current_binding, "option+space");
+        assert_eq!(
+            settings.bindings["transcribe"].current_binding,
+            "option+space"
+        );
     }
 
     #[test]

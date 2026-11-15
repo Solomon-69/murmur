@@ -97,6 +97,20 @@ fn should_restore_clipboard(handling: ClipboardHandling) -> bool {
 pub static KEEP_NEXT_ON_CLIPBOARD: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
+/// Run once, right after the paste keystroke is sent. Dictation uses it to
+/// hide the bar at once instead of after the clipboard-restore wait.
+pub static ON_PASTE_SENT: Mutex<Option<Box<dyn FnOnce() + Send>>> = Mutex::new(None);
+
+fn run_on_paste_sent() {
+    let hook = ON_PASTE_SENT
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .take();
+    if let Some(hook) = hook {
+        hook();
+    }
+}
+
 /// Set after "Turn into a prompt": the words as spoken. Once the prompt is
 /// pasted, these go on the clipboard (in place of the prompt or the old
 /// clipboard), so the person can always get back what they said.
@@ -122,8 +136,8 @@ fn paste_via_clipboard(
     paste_delay_after_ms: u64,
     restore: bool,
 ) -> Result<(), String> {
-    let restore = restore
-        && !KEEP_NEXT_ON_CLIPBOARD.swap(false, std::sync::atomic::Ordering::SeqCst);
+    let restore =
+        restore && !KEEP_NEXT_ON_CLIPBOARD.swap(false, std::sync::atomic::Ordering::SeqCst);
     let clipboard = app_handle.clipboard();
     let saved_text = clipboard.read_text().ok().filter(|t| !t.is_empty());
     // Only probe for an image when there is no text to restore. Text is by far the
@@ -165,6 +179,9 @@ fn paste_via_clipboard(
 
         Ok(())
     })();
+    if paste_result.is_ok() {
+        run_on_paste_sent();
+    }
 
     if !restore {
         // The dictation stays on the clipboard; nothing to put back, so the
@@ -924,6 +941,11 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
         .unwrap_or_else(PoisonError::into_inner)
         .take();
     let result = paste_inner(text, &app_handle);
+    // A paste that never sent its keystroke must not leave the hook for the next one.
+    ON_PASTE_SENT
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .take();
     // A missed paste leaves the prompt on the clipboard for Cmd+V instead.
     if let (Ok(()), Some(original)) = (&result, original) {
         leave_original_on_clipboard(&app_handle, original);
@@ -955,7 +977,10 @@ fn paste_inner(text: String, app_handle: &AppHandle) -> Result<(), String> {
     // front, or keep the words on the clipboard and say so.
     let pastes_by_keystroke = matches!(
         paste_method,
-        PasteMethod::CtrlV | PasteMethod::CtrlShiftV | PasteMethod::ShiftInsert | PasteMethod::Direct
+        PasteMethod::CtrlV
+            | PasteMethod::CtrlShiftV
+            | PasteMethod::ShiftInsert
+            | PasteMethod::Direct
     );
     if pastes_by_keystroke
         && crate::paste_guard::ensure_target_front() == crate::paste_guard::Ready::CopyOnly
@@ -1056,12 +1081,19 @@ mod tests {
         assert_eq!(copied_text(Some(COPY_PROBE.to_string())), None);
         assert_eq!(copied_text(Some("  ".to_string())), None);
         assert_eq!(copied_text(None), None);
-        assert_eq!(copied_text(Some("picked".to_string())).as_deref(), Some("picked"));
+        assert_eq!(
+            copied_text(Some("picked".to_string())).as_deref(),
+            Some("picked")
+        );
     }
 
     /// The long-dictation glitch: the target app reads the pasted data some
     /// time after Cmd+V. Simulate that read and check what it gets.
-    fn simulated_read(handling: ClipboardHandling, text: &str, app_read_after_ms: u64) -> &'static str {
+    fn simulated_read(
+        handling: ClipboardHandling,
+        text: &str,
+        app_read_after_ms: u64,
+    ) -> &'static str {
         let restore = should_restore_clipboard(handling);
         let restore_at = clipboard_restore_delay_ms(60, text.len());
         if restore && app_read_after_ms >= restore_at {
@@ -1088,10 +1120,17 @@ mod tests {
         // Before the fix the old clipboard came back after 60 ms; a 300 ms read
         // (common in busy Electron apps) then pasted the old item.
         let long = "word ".repeat(400);
-        assert_eq!(simulated_read(ClipboardHandling::DontModify, &long, 300), "DICTATION");
+        assert_eq!(
+            simulated_read(ClipboardHandling::DontModify, &long, 300),
+            "DICTATION"
+        );
         assert!(clipboard_restore_delay_ms(60, 0) >= 250);
         assert!(clipboard_restore_delay_ms(60, 1_000_000) <= MAX_RESTORE_DELAY_MS);
-        assert_eq!(clipboard_restore_delay_ms(2000, 10), 2000, "a longer user delay wins");
+        assert_eq!(
+            clipboard_restore_delay_ms(2000, 10),
+            2000,
+            "a longer user delay wins"
+        );
     }
     use std::cell::Cell;
 

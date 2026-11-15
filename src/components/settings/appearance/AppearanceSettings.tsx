@@ -9,11 +9,7 @@ import { SettingContainer } from "../../ui/SettingContainer";
 import { ThemeSelector } from "../ThemeSelector";
 import { SegmentedControl } from "./SegmentedControl";
 import { ToggleSwitch } from "../../ui/ToggleSwitch";
-import {
-  BarPreview,
-  CLEAR_TINTS,
-  GLASS_TINTS,
-} from "./BarPreview";
+import { BarPreview, CLEAR_TINTS, GLASS_TINTS } from "./BarPreview";
 import { TintSwatches } from "./TintSwatches";
 import { BLACK_SWATCH_COLORS, CLEAR_SWATCH_COLORS } from "./ColorSwatch";
 import { AccentPicker } from "./AccentPicker";
@@ -37,6 +33,10 @@ export const AppearanceSettings: React.FC = () => {
   const horizontal = settings.overlay_horizontal ?? "screen";
   const offset = settings.overlay_offset_x ?? 0;
   const accent = normalizeAccent(settings.overlay_accent);
+  const appMatchesBar = !settings.app_accent || settings.app_accent === "same";
+  const appAccent = appMatchesBar
+    ? accent
+    : normalizeAccent(settings.app_accent);
   const opacity = settings.overlay_opacity ?? 1;
   const glass = settings.overlay_glass ?? "clear";
   const tint = settings.overlay_glass_tint ?? "black";
@@ -50,6 +50,29 @@ export const AppearanceSettings: React.FC = () => {
     <div className="max-w-3xl w-full mx-auto space-y-6">
       <SettingsGroup title={t(`${a}.sections.app`)}>
         <ThemeSelector descriptionMode="tooltip" grouped={true} />
+        <ToggleSwitch
+          label={t(`${a}.appAccent.match`)}
+          description={t(`${a}.appAccent.matchDescription`)}
+          checked={appMatchesBar}
+          onChange={(on) => updateSetting("app_accent", on ? "same" : accent)}
+          grouped={true}
+        />
+        <SettingContainer
+          title={t(`${a}.appAccent.title`)}
+          description={t(`${a}.appAccent.description`)}
+          descriptionMode="tooltip"
+          layout="stacked"
+          grouped={true}
+        >
+          <div
+            className={`transition-opacity duration-200 ${appMatchesBar ? "opacity-55" : ""}`}
+          >
+            <AccentPicker
+              value={appAccent}
+              onChange={(id) => updateSetting("app_accent", id)}
+            />
+          </div>
+        </SettingContainer>
       </SettingsGroup>
       <SettingsGroup title={t(`${a}.sections.bar`)}>
         <div className="px-4 py-4 flex flex-col items-center gap-3">
@@ -112,7 +135,9 @@ export const AppearanceSettings: React.FC = () => {
               value={clearTint}
               label={t(`${a}.clearTint.title`)}
               name={(id) => t(`${a}.clearTint.${id}`)}
-              fill={(id) => CLEAR_SWATCH_COLORS[id] ?? CLEAR_SWATCH_COLORS.clear}
+              fill={(id) =>
+                CLEAR_SWATCH_COLORS[id] ?? CLEAR_SWATCH_COLORS.clear
+              }
               onChange={(id) => updateSetting("overlay_clear_tint", id)}
             />
           </SettingContainer>
@@ -129,7 +154,9 @@ export const AppearanceSettings: React.FC = () => {
               value={tint}
               label={t(`${a}.tint.title`)}
               name={(id) => t(`${a}.tint.${id}`)}
-              fill={(id) => BLACK_SWATCH_COLORS[id] ?? BLACK_SWATCH_COLORS.black}
+              fill={(id) =>
+                BLACK_SWATCH_COLORS[id] ?? BLACK_SWATCH_COLORS.black
+              }
               onChange={(id) => updateSetting("overlay_glass_tint", id)}
             />
           </SettingContainer>

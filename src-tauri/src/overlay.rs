@@ -1,7 +1,7 @@
 use crate::input;
 use crate::notices::Notice;
-use crate::settings;
 use crate::overlay_placement::{bar_x, bar_y, Rect};
+use crate::settings;
 use crate::settings::{OverlayHorizontal, OverlayPosition, OverlayStyle};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};

@@ -87,6 +87,22 @@ const DEFAULT_AUDIO_DEVICE: AudioDevice = {
 };
 
 /** Appearance + prompt-chip settings share one validated backend command. */
+/** Colours the main window (and remembers it for the next launch). */
+const applyAppAccent = (id: string) => {
+  document.documentElement.dataset.accent = id;
+  try {
+    localStorage.setItem("murmur-accent", id);
+  } catch {
+    /* the saved setting still applies on next load */
+  }
+};
+
+/** The app colour in use: its own pick, or the bar's when "same". */
+export const effectiveAppAccent = (s: Settings) =>
+  normalizeAccent(
+    !s.app_accent || s.app_accent === "same" ? s.overlay_accent : s.app_accent,
+  );
+
 const appearance = async (key: string, value: unknown) => {
   const result = await commands.changeAppearanceSetting(key, String(value));
   if (result.status === "error") throw new Error(result.error);
@@ -199,13 +215,15 @@ const settingUpdaters: {
   overlay_size: (value) => appearance("overlay_size", value),
   overlay_accent: (value) => {
     const id = normalizeAccent(String(value));
-    document.documentElement.dataset.accent = id;
-    try {
-      localStorage.setItem("murmur-accent", id);
-    } catch {
-      /* the saved setting still applies on next load */
-    }
+    const app = useSettingsStore.getState().settings?.app_accent ?? "same";
+    applyAppAccent(app === "same" ? id : app);
     return appearance("overlay_accent", id);
+  },
+  app_accent: (value) => {
+    const id = value === "same" ? "same" : normalizeAccent(String(value));
+    const bar = useSettingsStore.getState().settings?.overlay_accent;
+    applyAppAccent(id === "same" ? normalizeAccent(bar) : id);
+    return appearance("app_accent", id);
   },
   overlay_opacity: (value) => appearance("overlay_opacity", value),
   overlay_glass: (value) => appearance("overlay_glass", value),
@@ -301,6 +319,7 @@ export const useSettingsStore = create<SettingsStore>()(
             selected_output_device:
               settings.selected_output_device ?? "Default",
           };
+          applyAppAccent(effectiveAppAccent(normalizedSettings));
           set({ settings: normalizedSettings, isLoading: false });
         } else {
           console.error("Failed to load settings:", result.error);

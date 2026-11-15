@@ -789,8 +789,8 @@ pub fn change_appearance_setting(app: AppHandle, key: String, value: String) -> 
     settings::apply_appearance_setting(&mut settings, &key, &value)?;
     settings::write_settings(&app, settings.clone());
     sync_optional_binding(&app, &key, &settings);
-    if key == "overlay_accent" {
-        crate::dock_icon::apply_dock_icon(&app, &settings.overlay_accent);
+    if key == "overlay_accent" || key == "app_accent" {
+        crate::dock_icon::apply_dock_icon(&app, settings::effective_app_accent(&settings));
     }
     // The bar reads its look on every show; tell a visible one to refresh now.
     let _ = app.emit("appearance-changed", ());
@@ -851,7 +851,10 @@ pub fn open_accessibility_settings() -> Result<(), String> {
 /// Saves the snippet list (empty triggers/texts are dropped).
 #[tauri::command]
 #[specta::specta]
-pub fn change_snippets_setting(app: AppHandle, snippets: Vec<settings::Snippet>) -> Result<(), String> {
+pub fn change_snippets_setting(
+    app: AppHandle,
+    snippets: Vec<settings::Snippet>,
+) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.snippets = snippets
         .into_iter()

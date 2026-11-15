@@ -106,12 +106,18 @@ mod tests {
 
     #[test]
     fn prefers_cleaned_text() {
-        assert_eq!(paste_text(&entry("raw", Some("clean"))).as_deref(), Some("clean"));
+        assert_eq!(
+            paste_text(&entry("raw", Some("clean"))).as_deref(),
+            Some("clean")
+        );
     }
 
     #[test]
     fn blank_cleaned_text_falls_back_to_raw() {
-        assert_eq!(paste_text(&entry("raw", Some("  "))).as_deref(), Some("raw"));
+        assert_eq!(
+            paste_text(&entry("raw", Some("  "))).as_deref(),
+            Some("raw")
+        );
     }
 
     #[test]

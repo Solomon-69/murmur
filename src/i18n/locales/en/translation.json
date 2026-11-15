@@ -973,8 +973,8 @@
         "description": "Move the bar left or right of the screen centre, in points"
       },
       "accent": {
-        "title": "Colour",
-        "description": "Accent colour for the whole app and the recording bar",
+        "title": "Bar colour",
+        "description": "Accent colour for the recording bar",
         "default": "Grey",
         "terracotta": "Terracotta",
         "olive": "Olive",
@@ -1051,6 +1051,12 @@
         "bar": "Recording bar",
         "barLook": "Look",
         "barPlace": "Size and place"
+      },
+      "appAccent": {
+        "title": "App colour",
+        "description": "Accent colour for this window and the Dock icon. Picking one here stops it following the bar.",
+        "match": "Same colour as the bar",
+        "matchDescription": "The app uses the recording bar's colour"
       }
     },
     "snippets": {

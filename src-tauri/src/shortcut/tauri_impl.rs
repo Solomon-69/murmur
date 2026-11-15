@@ -19,7 +19,11 @@ static EVENT_GEN: AtomicU64 = AtomicU64::new(0);
 /// Left/right key codes for each modifier word a binding can use.
 #[cfg(target_os = "macos")]
 fn modifier_keys(shortcut: &str) -> Vec<[u16; 2]> {
-    let parts: Vec<String> = shortcut.to_lowercase().split('+').map(str::to_string).collect();
+    let parts: Vec<String> = shortcut
+        .to_lowercase()
+        .split('+')
+        .map(str::to_string)
+        .collect();
     let has = |names: &[&str]| parts.iter().any(|p| names.contains(&p.as_str()));
     let mut keys = Vec::new();
     if has(&["alt", "option"]) {
@@ -264,7 +268,10 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[test]
     fn held_check_knows_every_modifier_of_the_default() {
-        assert_eq!(super::modifier_keys("ctrl+shift+space"), vec![[59, 62], [56, 60]]);
+        assert_eq!(
+            super::modifier_keys("ctrl+shift+space"),
+            vec![[59, 62], [56, 60]]
+        );
         assert_eq!(super::modifier_keys("option+space"), vec![[58, 61]]);
         assert!(super::modifier_keys("f13").is_empty());
     }

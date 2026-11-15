@@ -106,7 +106,9 @@ pub fn bar_y(
     let _ = (mode, target);
     match position {
         OverlayPosition::Top => screen.y + top_offset,
-        OverlayPosition::Bottom => (bottom_limit - height - bottom_offset).max(screen.y + top_offset),
+        OverlayPosition::Bottom => {
+            (bottom_limit - height - bottom_offset).max(screen.y + top_offset)
+        }
     }
 }
 
@@ -133,8 +135,18 @@ mod tests {
         let win = Rect::new(100.0, 40.0, 1300.0, 880.0);
         let chat = Rect::new(300.0, 800.0, 1100.0, 60.0);
         let target = pick_target(Some(win), Some(chat)).unwrap();
-        let x = bar_x(OverlayHorizontal::ActiveWindow, &screen(), Some(&target), 0.0, W);
-        assert!((x + W / 2.0 - 850.0).abs() < 0.001, "bar centre {}", x + W / 2.0);
+        let x = bar_x(
+            OverlayHorizontal::ActiveWindow,
+            &screen(),
+            Some(&target),
+            0.0,
+            W,
+        );
+        assert!(
+            (x + W / 2.0 - 850.0).abs() < 0.001,
+            "bar centre {}",
+            x + W / 2.0
+        );
     }
 
     #[test]
@@ -170,7 +182,13 @@ mod tests {
     #[test]
     fn window_partly_off_screen_is_clamped() {
         let win = Rect::new(-600.0, 40.0, 800.0, 600.0);
-        let x = bar_x(OverlayHorizontal::ActiveWindow, &screen(), Some(&win), 0.0, W);
+        let x = bar_x(
+            OverlayHorizontal::ActiveWindow,
+            &screen(),
+            Some(&win),
+            0.0,
+            W,
+        );
         assert_eq!(x, 0.0);
     }
 

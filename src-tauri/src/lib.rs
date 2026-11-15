@@ -24,20 +24,19 @@ mod memory;
 mod notices;
 mod overlay;
 mod overlay_placement;
+mod paste_guard;
 mod paste_last;
+mod paste_tx;
+pub mod portable;
 mod prompt_chip;
 mod prompt_detect;
 mod prompt_format;
-mod paste_guard;
-mod smart_fix;
-mod spoken_format;
-mod voice_edits;
-mod paste_tx;
-pub mod portable;
 mod secure_input;
 mod settings;
 mod shortcut;
 mod signal_handle;
+mod smart_fix;
+mod spoken_format;
 mod system_languages;
 mod transcription_coordinator;
 mod transcription_hook;
@@ -45,6 +44,7 @@ mod tray;
 mod tray_i18n;
 mod usage_stats;
 mod utils;
+mod voice_edits;
 pub mod webkit_renderer;
 
 pub use cli::CliArgs;
@@ -134,7 +134,10 @@ fn show_main_window(app: &AppHandle) {
                 log::error!("Failed to set activation policy to Regular: {}", e);
             }
             // Re-apply the accent icon in case the policy switch reset it.
-            dock_icon::apply_dock_icon(app, &settings::get_settings(app).overlay_accent);
+            dock_icon::apply_dock_icon(
+                app,
+                settings::effective_app_accent(&settings::get_settings(app)),
+            );
         }
         return;
     }
@@ -410,7 +413,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     autostart::apply_autostart(app_handle, settings.autostart_enabled);
 
     // Tint the Dock / Cmd-Tab icon to the chosen accent (Grey keeps the original)
-    dock_icon::apply_dock_icon(app_handle, &settings.overlay_accent);
+    dock_icon::apply_dock_icon(app_handle, settings::effective_app_accent(&settings));
 
     // Create the recording overlay window (hidden by default)
     utils::create_recording_overlay(app_handle);

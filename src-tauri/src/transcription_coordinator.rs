@@ -1719,10 +1719,16 @@ mod tests {
                 effects.extend(state.on_grace_expired());
             }
             assert_eq!(state.stage, Stage::Processing, "session must end normally");
-            assert_eq!(effects.len(), 2, "exactly one start and one stop: {effects:?}");
+            assert_eq!(
+                effects.len(),
+                2,
+                "exactly one start and one stop: {effects:?}"
+            );
             for effect in &effects {
                 let id = match effect {
-                    Effect::Start { binding_id, .. } | Effect::Stop { binding_id, .. } => binding_id,
+                    Effect::Start { binding_id, .. } | Effect::Stop { binding_id, .. } => {
+                        binding_id
+                    }
                 };
                 assert_eq!(id, "transcribe", "post-process must never run: {effects:?}");
             }

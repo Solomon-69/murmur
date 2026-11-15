@@ -9,9 +9,25 @@
 
 /// Words that signal a change of mind.
 const CUES: &[&str] = &[
-    "or oh", "oh no", "no wait", "hold on", "i mean", "or rather", "sorry i meant",
-    "scratch that", "never mind", "nevermind", "let me rephrase", "i meant", "no no",
-    "didn't mean", "not what i meant", "wait no", "actually no", "i mean", "let me start again",
+    "or oh",
+    "oh no",
+    "no wait",
+    "hold on",
+    "i mean",
+    "or rather",
+    "sorry i meant",
+    "scratch that",
+    "never mind",
+    "nevermind",
+    "let me rephrase",
+    "i meant",
+    "no no",
+    "didn't mean",
+    "not what i meant",
+    "wait no",
+    "actually no",
+    "i mean",
+    "let me start again",
 ];
 /// The online AI service is fast, so it may take long dictations too.
 const ONLINE_MAX_WORDS: usize = 400;
@@ -55,7 +71,9 @@ fn has_cue(w: &[String]) -> bool {
 
 /// The same word twice in a row, or the same 2-3 word phrase twice close together.
 fn has_repeat(w: &[String]) -> bool {
-    if w.windows(2).any(|p| p[0] == p[1] && p[0].len() > 1 && p[0] != "that" && p[0] != "had") {
+    if w.windows(2)
+        .any(|p| p[0] == p[1] && p[0].len() > 1 && p[0] != "that" && p[0] != "had")
+    {
         return true;
     }
     for n in 2..=3usize {
@@ -95,10 +113,20 @@ pub fn drop_double_words(text: &str) -> String {
     let mut out: Vec<&str> = Vec::new();
     for w in text.split_whitespace() {
         if let Some(prev) = out.last() {
-            let a: String = prev.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect();
-            let b: String = w.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect();
+            let a: String = prev
+                .chars()
+                .filter(|c| c.is_alphanumeric())
+                .flat_map(char::to_lowercase)
+                .collect();
+            let b: String = w
+                .chars()
+                .filter(|c| c.is_alphanumeric())
+                .flat_map(char::to_lowercase)
+                .collect();
             let plain_prev = prev.chars().all(|c| c.is_alphanumeric() || c == '\'');
-            const KEEP: &[&str] = &["that", "had", "no", "bye", "very", "so", "ha", "really", "now", "go"];
+            const KEEP: &[&str] = &[
+                "that", "had", "no", "bye", "very", "so", "ha", "really", "now", "go",
+            ];
             if a == b && a.len() > 1 && !KEEP.contains(&a.as_str()) && plain_prev {
                 out.pop();
             }
@@ -131,12 +159,18 @@ pub fn apply_with(text: &str, settings: Option<&crate::settings::AppSettings>) -
     let signs = has_cue(&w) || has_repeat(&w);
     if let Some(s) = settings {
         if signs && (MIN_WORDS..=ONLINE_MAX_WORDS).contains(&w.len()) {
-            if let Some(answer) = crate::prompt_chip::rewrite_via_api(s, INSTRUCTION, text, ONLINE_TIMEOUT_MS) {
+            if let Some(answer) =
+                crate::prompt_chip::rewrite_via_api(s, INSTRUCTION, text, ONLINE_TIMEOUT_MS)
+            {
                 match answer {
                     Ok(out) => {
                         let out = out.trim().trim_matches('"').trim().to_string();
                         if acceptable(text, &out) {
-                            log::info!("smart fix (online): {} -> {} words", w.len(), words(&out).len());
+                            log::info!(
+                                "smart fix (online): {} -> {} words",
+                                w.len(),
+                                words(&out).len()
+                            );
                             return out;
                         }
                         log::info!("smart fix (online): answer rejected, trying on-device");
@@ -153,7 +187,11 @@ pub fn apply_with(text: &str, settings: Option<&crate::settings::AppSettings>) -
         Ok(out) => {
             let out = out.trim().trim_matches('"').trim().to_string();
             if acceptable(text, &out) {
-                log::info!("smart fix: applied ({} -> {} words)", words(text).len(), words(&out).len());
+                log::info!(
+                    "smart fix: applied ({} -> {} words)",
+                    words(text).len(),
+                    words(&out).len()
+                );
                 out
             } else {
                 log::info!("smart fix: answer rejected, keeping the original");
@@ -174,24 +212,42 @@ mod tests {
     #[test]
     fn detects_changes_of_mind_and_repeats() {
         assert!(needs_fix("I like strawberries or oh I want bananas"));
-        assert!(needs_fix("we should meet on Tuesday no wait Wednesday afternoon"));
+        assert!(needs_fix(
+            "we should meet on Tuesday no wait Wednesday afternoon"
+        ));
         assert!(needs_fix("I went to the the shop yesterday afternoon"));
-        assert_eq!(drop_double_words("I went to the the shop"), "I went to the shop");
-        assert_eq!(drop_double_words("I had had enough, that that is it"), "I had had enough, that that is it");
-        assert!(needs_fix("send the report to the team send the report to the team today"));
+        assert_eq!(
+            drop_double_words("I went to the the shop"),
+            "I went to the shop"
+        );
+        assert_eq!(
+            drop_double_words("I had had enough, that that is it"),
+            "I had had enough, that that is it"
+        );
+        assert!(needs_fix(
+            "send the report to the team send the report to the team today"
+        ));
     }
 
     #[test]
     fn leaves_ordinary_speech_alone() {
         assert!(!needs_fix("I would like a coffee please with some milk"));
         assert!(!needs_fix("short one"));
-        assert!(!needs_fix("It was a really good day and we all had fun at the park"));
+        assert!(!needs_fix(
+            "It was a really good day and we all had fun at the park"
+        ));
     }
 
     #[test]
     fn rejects_invented_or_longer_answers() {
-        assert!(acceptable("I like strawberries or oh I want bananas", "I want bananas."));
-        assert!(!acceptable("I want bananas", "I want bananas and also some delicious oranges today"));
+        assert!(acceptable(
+            "I like strawberries or oh I want bananas",
+            "I want bananas."
+        ));
+        assert!(!acceptable(
+            "I want bananas",
+            "I want bananas and also some delicious oranges today"
+        ));
         assert!(!acceptable("I want bananas", ""));
         // A leaked example sentence must never get through.
         assert!(!acceptable(

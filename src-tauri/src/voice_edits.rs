@@ -82,7 +82,10 @@ fn cue_at(words: &[&str], i: usize, cues: &[&str]) -> Option<usize> {
     cues.iter().find_map(|cue| {
         let parts: Vec<&str> = cue.split(' ').collect();
         let fits = i + parts.len() <= words.len()
-            && parts.iter().enumerate().all(|(k, p)| norm(words[i + k]) == *p);
+            && parts
+                .iter()
+                .enumerate()
+                .all(|(k, p)| norm(words[i + k]) == *p);
         fits.then_some(parts.len())
     })
 }
@@ -132,12 +135,18 @@ fn correction_cut(out: &[String], correction: &[&str]) -> usize {
         .find(|(_, w)| ends_sentence(w))
         .map_or(0, |(k, _)| k + 1);
     if !first.is_empty() {
-        if let Some(p) = (sentence_start..out.len()).rev().find(|&p| norm(&out[p]) == first) {
+        if let Some(p) = (sentence_start..out.len())
+            .rev()
+            .find(|&p| norm(&out[p]) == first)
+        {
             return p;
         }
     }
     let is_cap = |w: &String| w.chars().next().is_some_and(char::is_uppercase);
-    let mut cut = out.len().saturating_sub(1).max(sentence_start.min(out.len()));
+    let mut cut = out
+        .len()
+        .saturating_sub(1)
+        .max(sentence_start.min(out.len()));
     if out.last().is_some_and(is_cap) {
         while cut > sentence_start + 1
             && out.len() - cut < MAX_CORRECTED_WORDS
@@ -185,7 +194,10 @@ pub fn apply_corrections(text: &str) -> String {
             let w = words[i];
             if lower && norm(w) != "i" && !out.last().is_some_and(|l| ends_sentence(l)) {
                 let mut c = w.chars();
-                let first = c.next().map(|f| f.to_lowercase().collect::<String>()).unwrap_or_default();
+                let first = c
+                    .next()
+                    .map(|f| f.to_lowercase().collect::<String>())
+                    .unwrap_or_default();
                 out.push(first + c.as_str());
                 i += 1;
                 continue;
@@ -306,7 +318,10 @@ mod tests {
                 "I want to go to the shop, oh no, I didn't mean that, I meant the park.",
                 "I want to go to the park.",
             ),
-            ("Meet me on Tuesday, oh no I meant Wednesday.", "Meet me on Wednesday."),
+            (
+                "Meet me on Tuesday, oh no I meant Wednesday.",
+                "Meet me on Wednesday.",
+            ),
             (
                 "I like strawberries. Oh no, I didn't mean that. I meant I like bananas.",
                 "I like bananas.",
@@ -319,7 +334,10 @@ mod tests {
                 "The meeting is at three, no wait, I meant four, and bring the slides.",
                 "The meeting is at four, and bring the slides.",
             ),
-            ("Book a table for two, I meant four people.", "Book a table for four people."),
+            (
+                "Book a table for two, I meant four people.",
+                "Book a table for four people.",
+            ),
             (
                 "Turn this into a red button, that's not what I meant, I meant a blue button.",
                 "Turn this into a blue button.",
@@ -385,14 +403,26 @@ mod tests {
     #[test]
     fn spoken_examples_end_to_end() {
         // Real examples, as the speech model writes them.
-        assert_eq!(apply("I want strawberries, comma, no, I want bananas.", true, &[]), "I want bananas.");
-        assert_eq!(apply("I want strawberries comma no I want bananas", true, &[]), "I want bananas");
+        assert_eq!(
+            apply("I want strawberries, comma, no, I want bananas.", true, &[]),
+            "I want bananas."
+        );
+        assert_eq!(
+            apply("I want strawberries comma no I want bananas", true, &[]),
+            "I want bananas"
+        );
         assert_eq!(
             apply("Send it to me comma then call Sam full stop", true, &[]),
             "Send it to me, then call Sam."
         );
-        assert_eq!(apply("Use the slash prompt skill", true, &[]), "Use the /prompt skill");
-        assert_eq!(apply("I need twenty five chairs", true, &[]), "I need 25 chairs");
+        assert_eq!(
+            apply("Use the slash prompt skill", true, &[]),
+            "Use the /prompt skill"
+        );
+        assert_eq!(
+            apply("I need twenty five chairs", true, &[]),
+            "I need 25 chairs"
+        );
     }
 
     #[test]

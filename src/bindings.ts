@@ -1247,6 +1247,10 @@ overlay_offset_x?: number; overlay_size?: OverlaySize;
  */
 overlay_accent?: string; 
 /**
+ * Colour of the main app window and Dock icon. "same" follows the bar colour.
+ */
+app_accent?: string; 
+/**
  * Bar opacity, 0.4 to 1.0.
  */
 overlay_opacity?: number; 

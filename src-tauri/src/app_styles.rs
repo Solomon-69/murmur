@@ -98,7 +98,10 @@ mod tests {
     fn matches_bundle_id_ignoring_case_and_spaces() {
         let styles = vec![style(" com.apple.Mail ", WritingStyle::Formal)];
         assert_eq!(style_for("com.apple.mail", &styles), WritingStyle::Formal);
-        assert_eq!(style_for("com.tinyspeck.slackmacgap", &styles), WritingStyle::None);
+        assert_eq!(
+            style_for("com.tinyspeck.slackmacgap", &styles),
+            WritingStyle::None
+        );
         assert_eq!(style_for("  ", &styles), WritingStyle::None);
     }
 
@@ -109,7 +112,11 @@ mod tests {
 
     #[test]
     fn every_style_forbids_answering() {
-        for s in [WritingStyle::Formal, WritingStyle::Casual, WritingStyle::Code] {
+        for s in [
+            WritingStyle::Formal,
+            WritingStyle::Casual,
+            WritingStyle::Code,
+        ] {
             let text = instruction(s).expect("style has an instruction");
             assert!(text.contains("never answer it"), "{s:?}");
             assert!(text.contains("Output only the rewritten text"), "{s:?}");
@@ -122,7 +129,9 @@ mod tests {
             instruction(WritingStyle::Formal),
             instruction(WritingStyle::Casual)
         );
-        assert!(instruction(WritingStyle::Code).unwrap().contains("backticks"));
+        assert!(instruction(WritingStyle::Code)
+            .unwrap()
+            .contains("backticks"));
     }
 
     #[test]
@@ -137,7 +146,10 @@ mod tests {
         let out = sanitize(input, 2);
         assert_eq!(
             out,
-            vec![style("com.a", WritingStyle::Casual), style("com.b", WritingStyle::Code)]
+            vec![
+                style("com.a", WritingStyle::Casual),
+                style("com.b", WritingStyle::Code)
+            ]
         );
     }
 }

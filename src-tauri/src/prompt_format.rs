@@ -54,8 +54,15 @@ fn drop_empty_sections(text: &str) -> String {
                 .to_lowercase();
             matches!(
                 t.as_str(),
-                "" | "none" | "n/a" | "na" | "nothing" | "nothing specified" | "none specified"
-                    | "not specified" | "none given" | "no questions"
+                "" | "none"
+                    | "n/a"
+                    | "na"
+                    | "nothing"
+                    | "nothing specified"
+                    | "none specified"
+                    | "not specified"
+                    | "none given"
+                    | "no questions"
             )
         });
         if !(section[0].starts_with("## ") && empty) {
@@ -102,7 +109,9 @@ fn clean_words(text: &str) -> String {
     let words: Vec<&str> = text
         .split_whitespace()
         .filter(|w| {
-            let bare = w.trim_matches(|c: char| !c.is_alphanumeric()).to_lowercase();
+            let bare = w
+                .trim_matches(|c: char| !c.is_alphanumeric())
+                .to_lowercase();
             !FILLER.contains(&bare.as_str())
         })
         .collect();
@@ -140,7 +149,12 @@ fn sentences(text: &str) -> Vec<String> {
     parts.push(current);
     let parts: Vec<String> = parts
         .into_iter()
-        .map(|p| p.trim().trim_end_matches(['.', '!', '?']).trim().to_string())
+        .map(|p| {
+            p.trim()
+                .trim_end_matches(['.', '!', '?'])
+                .trim()
+                .to_string()
+        })
         .filter(|p| !p.is_empty())
         .collect();
     if parts.len() >= 2 {
@@ -155,7 +169,12 @@ fn sentences(text: &str) -> Vec<String> {
     for m in CLAUSE_BREAK.find_iter(only) {
         kept_keyword.push(only[last..m.start()].to_string());
         // Keep "make sure", "don't", "never" as part of the next step.
-        let matched = m.as_str().trim().trim_start_matches(',').trim().to_lowercase();
+        let matched = m
+            .as_str()
+            .trim()
+            .trim_start_matches(',')
+            .trim()
+            .to_lowercase();
         let keep = ["make sure", "please", "don't", "do not", "never"]
             .iter()
             .find(|k| matched.ends_with(*k));
@@ -239,8 +258,14 @@ mod tests {
         let good = "## Goal\nWider bar.\n\n## Steps\n1. Widen the bar.\n2. Test it.";
         assert!(has_prompt_format(good));
         assert!(!has_prompt_format("Make the bar wider and test it."));
-        assert!(!has_prompt_format("## Goal\nWider bar.\n\n## Steps\n- Widen the bar."), "steps must be numbered");
-        assert!(!has_prompt_format("## Steps\n1. Widen.\n## Goal\nWider."), "goal comes first");
+        assert!(
+            !has_prompt_format("## Goal\nWider bar.\n\n## Steps\n- Widen the bar."),
+            "steps must be numbered"
+        );
+        assert!(
+            !has_prompt_format("## Steps\n1. Widen.\n## Goal\nWider."),
+            "goal comes first"
+        );
     }
 
     #[test]
@@ -260,16 +285,23 @@ mod tests {
 
     #[test]
     fn fallback_goal_is_first_sentence_and_steps_the_rest() {
-        let out = fallback_prompt("Fix the login bug. Add a test for it. Do not touch the sign up page.");
+        let out =
+            fallback_prompt("Fix the login bug. Add a test for it. Do not touch the sign up page.");
         assert!(out.contains("## Goal\nFix the login bug.\n"), "{out}");
-        assert!(out.contains("## Steps\n1. Add a test for it.\n2. Do not touch the sign up page."), "{out}");
+        assert!(
+            out.contains("## Steps\n1. Add a test for it.\n2. Do not touch the sign up page."),
+            "{out}"
+        );
     }
 
     #[test]
     fn fallback_splits_one_long_spoken_sentence() {
         let out = fallback_prompt(SAID);
         assert!(out.contains("## Goal\nI want you to go into the murmur app and make the transcription bar a bit wider.\n"), "{out}");
-        assert!(out.contains("1. Fix the shortcut because it clashes with claude."), "{out}");
+        assert!(
+            out.contains("1. Fix the shortcut because it clashes with claude."),
+            "{out}"
+        );
         assert!(out.contains("2. Make sure you test it."), "{out}");
         assert!(!out.to_lowercase().contains("okay so"), "{out}");
     }
