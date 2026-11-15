@@ -61,7 +61,7 @@ export const Intro: React.FC<IntroProps> = ({ progress, onContinue }) => {
                 <span className="block text-[16px] leading-[1.3] font-semibold text-text">
                   {t(`onboarding.intro.features.${key}.title`)}
                 </span>
-                <span className="mt-[3px] block text-small leading-[1.4] text-ink-2">
+                <span className="mt-[3px] block text-small leading-[1.4] text-pretty text-ink-2">
                   {t(`onboarding.intro.features.${key}.body`)}
                 </span>
               </span>
