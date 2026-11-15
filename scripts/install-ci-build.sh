@@ -6,7 +6,7 @@
 # Usage: scripts/install-ci-build.sh <run-id>
 set -euo pipefail
 RUN_ID=${1:?run id}
-REPO=Solomon-69/murmur-build
+REPO=Solomon-69/murmur
 IDENTITY=${MURMUR_SIGN_ID:-$(security find-identity -v -p codesigning | sed -n 's/.*"\(Apple Development: [^"]*\)".*/\1/p' | head -1)}
 HERE=${0:A:h}
 WORK=$(mktemp -d)
