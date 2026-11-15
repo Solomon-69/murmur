@@ -155,19 +155,3 @@ html[data-sflow] [data-onboarding] .screen-in {
     filter: blur(4px);
   }
 }
-[data-onboarding] .intro-card {
-  transition:
-    border-color 0.2s ease,
-    transform 0.25s var(--ease-glide),
-    background-color 0.2s ease;
-}
-[data-onboarding] .intro-card:hover {
-  border-color: var(--color-line-strong);
-  transform: translateY(-2px);
-}
-[data-onboarding] .intro-card:hover .intro-icon {
-  transform: scale(1.06) rotate(-4deg);
-}
-[data-onboarding] .intro-icon {
-  transition: transform 0.3s var(--ease-glide);
-}
