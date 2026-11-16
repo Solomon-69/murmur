@@ -475,17 +475,17 @@ const RecordingOverlay: React.FC = () => {
       chipWork === "clean" ? "transcribe" : "prompt",
       false,
     );
-  // One segmented capsule: As is | Clean up (the default, in the middle) | Prompt, equal widths, with the
+  // One segmented capsule: Prompt | Clean up (the default, in the middle) | As is, equal widths, with the
   // countdown as a thin line along its bottom. Same height as every other row.
   const chipRow = chip && (
     <div className="sbase schip">
       <div className="schip-track">
         <button
           className="schip-b"
-          title={t("settings.appearance.promptChip.pasteAsIs")}
-          onClick={() => choose("paste")}
+          title={t("settings.appearance.promptChip.turnIntoPrompt")}
+          onClick={() => choose("prompt")}
         >
-          {t("overlay.chip.asIs")}
+          {t("overlay.chip.prompt")}
         </button>
         <button
           className="schip-b primary"
@@ -496,10 +496,10 @@ const RecordingOverlay: React.FC = () => {
         </button>
         <button
           className="schip-b"
-          title={t("settings.appearance.promptChip.turnIntoPrompt")}
-          onClick={() => choose("prompt")}
+          title={t("settings.appearance.promptChip.pasteAsIs")}
+          onClick={() => choose("paste")}
         >
-          {t("overlay.chip.prompt")}
+          {t("overlay.chip.asIs")}
         </button>
         <span
           className="schip-timer"
