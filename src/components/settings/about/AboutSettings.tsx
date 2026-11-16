@@ -9,6 +9,7 @@ import { AppDataDirectory } from "../AppDataDirectory";
 import { AppLanguageSelector } from "../AppLanguageSelector";
 import { ShowWhatsNewOnUpdate } from "../ShowWhatsNewOnUpdate";
 import { LogDirectory } from "../debug";
+import UpdateChecker from "../../update-checker";
 
 export const AboutSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -47,6 +48,16 @@ export const AboutSettings: React.FC = () => {
         >
           {/* eslint-disable-next-line i18next/no-literal-string */}
           <span className="text-sm font-mono">v{version}</span>
+        </SettingContainer>
+
+        <SettingContainer
+          title={t("settings.about.updates.title", { defaultValue: "Updates" })}
+          description={t("settings.about.updates.description", {
+            defaultValue: "Check for a new version and install it.",
+          })}
+          grouped={true}
+        >
+          <UpdateChecker />
         </SettingContainer>
 
         <ShowWhatsNewOnUpdate descriptionMode="tooltip" grouped={true} />
