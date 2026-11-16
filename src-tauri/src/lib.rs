@@ -117,6 +117,27 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
+/// macOS Dock icon: shown when "Show in Dock" is on, or when there is no menu bar
+/// icon (then the Dock is the only way back in). Otherwise menu bar only.
+pub fn apply_dock_policy(app: &AppHandle) {
+    #[cfg(target_os = "macos")]
+    {
+        let settings = settings::get_settings(app);
+        let tray_available = settings.show_tray_icon && !app.state::<CliArgs>().no_tray;
+        let policy = if settings.show_in_dock || !tray_available {
+            tauri::ActivationPolicy::Regular
+        } else {
+            tauri::ActivationPolicy::Accessory
+        };
+        if let Err(e) = app.set_activation_policy(policy) {
+            log::error!("Failed to set activation policy: {}", e);
+        }
+        dock_icon::apply_dock_icon(app, settings::effective_app_accent(&settings));
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = app;
+}
+
 fn show_main_window(app: &AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
@@ -130,9 +151,7 @@ fn show_main_window(app: &AppHandle) {
         }
         #[cfg(target_os = "macos")]
         {
-            if let Err(e) = app.set_activation_policy(tauri::ActivationPolicy::Regular) {
-                log::error!("Failed to set activation policy to Regular: {}", e);
-            }
+            apply_dock_policy(app);
             // Re-apply the accent icon in case the policy switch reset it.
             dock_icon::apply_dock_icon(
                 app,
@@ -179,7 +198,7 @@ fn apply_startup_activation_policy(app: &mut tauri::App, headless_mode: bool) {
     let should_hide = settings.start_hidden || cli_args.start_hidden;
     let tray_available = settings.show_tray_icon && !cli_args.no_tray;
 
-    if should_hide && tray_available {
+    if should_hide && tray_available && !settings.show_in_dock {
         log::info!("Starting hidden with tray available: launching as Accessory (no Dock icon)");
         app.set_activation_policy(tauri::ActivationPolicy::Accessory);
     }
@@ -770,6 +789,7 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_keyboard_implementation_setting,
             shortcut::get_keyboard_implementation,
             shortcut::change_show_tray_icon_setting,
+            shortcut::change_show_in_dock_setting,
             shortcut::change_transcribe_accelerator_setting,
             shortcut::change_transcribe_gpu_device,
             shortcut::get_available_accelerators,
@@ -1177,7 +1197,7 @@ pub fn run(cli_args: CliArgs) {
                     let settings = get_settings(window.app_handle());
                     let tray_visible =
                         settings.show_tray_icon && !window.app_handle().state::<CliArgs>().no_tray;
-                    if tray_visible {
+                    if tray_visible && !settings.show_in_dock {
                         // Tray is available: hide the dock icon, app lives in the tray
                         let res = window
                             .app_handle()

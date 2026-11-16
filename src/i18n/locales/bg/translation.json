@@ -506,6 +506,10 @@
         "label": "Икона в системната област",
         "description": "Показване на иконата на murmur в системната област."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "Наслагване",

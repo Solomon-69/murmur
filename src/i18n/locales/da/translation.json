@@ -506,6 +506,10 @@
         "label": "Vis proceslinjeikon",
         "description": "Vis murmur-ikonet i meddelelsesområdet."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "Overlay",

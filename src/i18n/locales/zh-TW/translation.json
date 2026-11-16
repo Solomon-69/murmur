@@ -506,6 +506,10 @@
         "label": "顯示系統匣圖示",
         "description": "在系統匣中顯示 murmur 圖示"
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "懸浮窗",

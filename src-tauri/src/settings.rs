@@ -601,6 +601,10 @@ pub struct AppSettings {
     pub keyboard_implementation: KeyboardImplementation,
     #[serde(default = "default_show_tray_icon")]
     pub show_tray_icon: bool,
+    /// macOS: keep murmur in the Dock all the time. Off: menu bar only (a Dock icon
+    /// still shows when there is no menu bar icon, so the app can always be reached).
+    #[serde(default)]
+    pub show_in_dock: bool,
     #[serde(default = "default_paste_delay_ms")]
     pub paste_delay_ms: u64,
     #[serde(default = "default_paste_delay_after_ms")]
@@ -1600,6 +1604,7 @@ pub fn get_default_settings() -> AppSettings {
         airpods_mode: false,
         keyboard_implementation: KeyboardImplementation::default(),
         show_tray_icon: default_show_tray_icon(),
+        show_in_dock: false,
         paste_delay_ms: default_paste_delay_ms(),
         paste_delay_after_ms: default_paste_delay_after_ms(),
         reliable_paste: false,

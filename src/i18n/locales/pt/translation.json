@@ -506,6 +506,10 @@
         "label": "Mostrar ícone na bandeja",
         "description": "Exibir o ícone do murmur na bandeja do sistema."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "Sobreposição",

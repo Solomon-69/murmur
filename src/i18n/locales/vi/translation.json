@@ -506,6 +506,10 @@
         "label": "Hiển thị biểu tượng khay",
         "description": "Hiển thị biểu tượng murmur trong khay hệ thống."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "Lớp phủ",

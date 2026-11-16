@@ -1586,6 +1586,19 @@ pub fn change_show_tray_icon_setting(app: AppHandle, enabled: bool) -> Result<()
     Ok(())
 }
 
+#[tauri::command]
+#[specta::specta]
+pub fn change_show_in_dock_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.show_in_dock = enabled;
+    settings::write_settings(&app, settings);
+
+    // Apply right away.
+    crate::apply_dock_policy(&app);
+
+    Ok(())
+}
+
 /// Save accelerator settings and make the next model use reload with them.
 /// The currently running transcription, if any, keeps its existing engine.
 fn save_accelerator_and_reload_next_use(app: &AppHandle, s: settings::AppSettings) {

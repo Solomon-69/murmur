@@ -506,6 +506,10 @@
         "label": "Afficher l'icône de la barre",
         "description": "Afficher l'icône de murmur dans la barre système."
       },
+      "showInDock": {
+        "label": "Afficher dans le Dock",
+        "description": "Garder murmur dans le Dock et le sélecteur d'apps. Désactivé : murmur reste seulement dans la barre des menus."
+      },
       "overlay": {
         "style": {
           "title": "Overlay",

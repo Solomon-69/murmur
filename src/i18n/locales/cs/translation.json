@@ -506,6 +506,10 @@
         "label": "Zobrazit ikonu v systémové liště",
         "description": "Zobrazit ikonu murmur v systémové liště."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "Překryv",

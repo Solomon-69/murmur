@@ -506,6 +506,10 @@
         "label": "트레이 아이콘 표시",
         "description": "시스템 트레이에 murmur 아이콘을 표시합니다."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "오버레이",

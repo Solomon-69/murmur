@@ -506,6 +506,10 @@
         "label": "ट्रे आइकन देखाउनुहोस्",
         "description": "सिस्टम ट्रेमा murmur आइकन देखाउनुहोस्।"
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "ओभरले",

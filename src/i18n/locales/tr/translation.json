@@ -506,6 +506,10 @@
         "label": "Tepsi Simgesini Göster",
         "description": "murmur simgesini sistem tepsisinde göster."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "Ekran Katmanı",

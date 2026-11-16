@@ -506,6 +506,10 @@
         "label": "הצג אייקון במגש",
         "description": "הצג את האייקון של murmur במגש המערכת."
       },
+      "showInDock": {
+        "label": "Show in Dock",
+        "description": "Keep murmur in the Dock and the app switcher. Off: murmur lives in the menu bar only."
+      },
       "overlay": {
         "style": {
           "title": "שכבת-על",
