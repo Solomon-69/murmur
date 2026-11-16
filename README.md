@@ -5,7 +5,7 @@
 
 <p align="center"><b>Talk instead of type on your Mac, offline.</b><br>Hold Control, Shift and Space, speak, let go. The text appears where your cursor is.</p>
 
-<p align="center"><a href="https://github.com/Solomon-69/murmur/releases/latest/download/murmur.dmg"><b>Download for Mac</b></a> &nbsp;·&nbsp; <a href="https://solomon-69.github.io/murmur/">Website</a> &nbsp;·&nbsp; <a href="https://github.com/Solomon-69/murmur/releases">All releases</a></p>
+<p align="center"><a href="https://github.com/Solomon-69/murmur/releases/latest/download/murmur.dmg"><b>Download for Mac</b></a> &nbsp;·&nbsp; <a href="https://github.com/Solomon-69/murmur/releases/latest/download/murmur-mac.zip">Mac zip</a> &nbsp;·&nbsp; <a href="https://solomon-69.github.io/murmur/">Website</a> &nbsp;·&nbsp; <a href="https://github.com/Solomon-69/murmur/releases">All releases</a></p>
 
 <p align="center">
   <picture>
@@ -36,7 +36,7 @@ murmur is based on [Handy by cjpais](https://github.com/cjpais/Handy) and keeps 
 
 ## Install
 
-Download the latest `.dmg` from the [releases page](https://github.com/Solomon-69/murmur/releases), open it and drag murmur into Applications. murmur checks for updates itself and shows an Update button when a new version is out.
+Download **[murmur.dmg](https://github.com/Solomon-69/murmur/releases/latest/download/murmur.dmg)** (always the newest), open it and drag murmur into Applications. Or paste one line in Terminal: `curl -fsSL https://solomon-69.github.io/Mac-Apps/download/install.sh | bash -s murmur`. murmur checks for updates itself and shows an Update button when a new version is out.
 
 ## Use
 
