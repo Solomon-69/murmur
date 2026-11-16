@@ -1012,7 +1012,7 @@
       },
       "promptChip": {
         "title": "Turn into a prompt",
-        "description": "Smart turns what you say into a clear prompt only when you are clearly talking to an AI (for example in Claude, ChatGPT or Cursor), and never asks. Ask shows As is, Prompt and Clean up after a long dictation. Always rewrites every long dictation. Runs on-device with Apple Intelligence.",
+        "description": "Smart turns what you say into a clear prompt only when you are clearly talking to an AI (for example in Claude, ChatGPT or Cursor), and never asks. Ask shows As is, Clean up and Prompt after a long dictation; Clean up is the default. Always rewrites every long dictation. Runs on-device with Apple Intelligence.",
         "off": "Off",
         "smart": "Smart",
         "ask": "Ask",

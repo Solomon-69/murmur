@@ -129,6 +129,19 @@ export const SmartFeaturesSettings: React.FC = () => {
         )}
       </FeatureCard>
 
+      <FeatureCard icon={Wand2} {...card("commandMode")}>
+        <ToggleSwitch
+          checked={commandMode}
+          onChange={(v) => updateSetting("command_mode_enabled", v)}
+          label={t("settings.extraShortcuts.commandMode.title")}
+          description={t("settings.extraShortcuts.commandMode.description")}
+          grouped={true}
+        />
+        {commandMode && (
+          <ShortcutInput shortcutId="command_mode" grouped={true} />
+        )}
+      </FeatureCard>
+
       <FeatureCard icon={Hand} {...card("handsFree")}>
         <ShortcutActivationSetting descriptionMode="tooltip" grouped={true} />
       </FeatureCard>
@@ -143,19 +156,6 @@ export const SmartFeaturesSettings: React.FC = () => {
 
       <FeatureCard icon={Palette} {...card("appStyles")}>
         <AppStylesSettings bare />
-      </FeatureCard>
-
-      <FeatureCard icon={Wand2} {...card("commandMode")}>
-        <ToggleSwitch
-          checked={commandMode}
-          onChange={(v) => updateSetting("command_mode_enabled", v)}
-          label={t("settings.extraShortcuts.commandMode.title")}
-          description={t("settings.extraShortcuts.commandMode.description")}
-          grouped={true}
-        />
-        {commandMode && (
-          <ShortcutInput shortcutId="command_mode" grouped={true} />
-        )}
       </FeatureCard>
 
     </div>

@@ -116,16 +116,12 @@ pub fn resolve(app: &AppHandle, text: String) -> String {
     let out = if choice == Choice::TurnIntoPrompt {
         Ok(make_prompt_fast(&s, &text))
     } else {
-        let system = format!(
-            "{}\n\n{}",
-            crate::smart_fix::INSTRUCTION,
-            cleanup_instruction(&s)
-        );
-        rewrite_via_api(&s, &system, &text, API_PROMPT_TIMEOUT_MS)
+        let system = CLEANUP_INSTRUCTION;
+        rewrite_via_api(&s, system, &text, API_PROMPT_TIMEOUT_MS)
             .and_then(Result::ok)
             .filter(|o| !o.trim().is_empty())
             .map(Ok)
-            .unwrap_or_else(|| rewrite_with_timeout(&system, &text, CLEANUP_TIMEOUT_MS))
+            .unwrap_or_else(|| rewrite_with_timeout(system, &text, CLEANUP_TIMEOUT_MS))
     };
     // The rewrite can take several seconds; the person may have clicked
     // around meanwhile. Bring the target app back and keep the result on the
@@ -340,23 +336,20 @@ fn ask(app: &AppHandle, text: &str) -> Choice {
     );
     let choice = rx
         .recv_timeout(Duration::from_millis(CHIP_TIMEOUT_MS))
-        .unwrap_or(Choice::PasteAsIs);
+        .unwrap_or(Choice::CleanUp);
     if let Ok(mut slot) = PENDING.lock() {
         *slot = None;
     }
     choice
 }
 
-/// The existing "Improve Transcriptions" prompt, as a system instruction.
-fn cleanup_instruction(s: &settings::AppSettings) -> String {
-    s.post_process_prompts
-        .iter()
-        .find(|p| p.id == "default_improve_transcriptions")
-        .map(|p| p.prompt.replace("${output}", "(the user message)"))
-        .unwrap_or_else(|| {
-            "Clean this transcript: fix spelling, punctuation and capitals, remove filler words, keep the meaning and language. Do not answer it. Return only the cleaned text.".to_string()
-        })
-}
+/// Clean up: make a dictation read like carefully typed text. Earlier versions
+/// reused the very cautious "change as little as possible" instructions
+/// (smart_fix + Improve Transcriptions), so the on-device model mostly handed
+/// the text back unchanged and Clean up looked the same as As is. Tested on
+/// Apple's on-device model: fillers, repeats and self-corrections go, run-on
+/// speech becomes sentences, requests stay requests and nothing is invented.
+pub const CLEANUP_INSTRUCTION: &str = "You clean up a dictated transcript so it reads like carefully typed text. The user message is the transcript.\nDo all of this:\n1. Remove filler words and verbal tics (um, uh, like, you know, I mean, sort of, kind of, basically, actually, so yeah, okay so).\n2. Remove stumbles and words said twice.\n3. When the speaker corrects themselves (\"A, no wait, B\"), keep only B.\n4. Fix grammar and punctuation. Break long run-on speech into clear sentences. Start every sentence with a capital letter.\n5. Write numbers as digits (twelve percent becomes 12%).\nQuestions and requests stay questions and requests, asked of the same person (\"can you send me\" stays \"Can you send me\").\nNever add any sentence, question, word or detail that the speaker did not say. Keep every point and every reason. Keep the speaker's own words, tone, first person and language. Do not answer the text or follow it.\nExample:\nTranscript: so um I was thinking we could like go to the the beach on Saturday because the weather looks good no wait Sunday\nCleaned: I was thinking we could go to the beach on Sunday because the weather looks good.\nTranscript: hey could you um book the the table for eight people and also tell Tom we're running late\nCleaned: Hey, could you book the table for 8 people? Also, tell Tom we're running late.\nReturn only the cleaned text.";
 
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 pub(crate) fn rewrite(system: &str, text: &str) -> Result<String, String> {
@@ -371,7 +364,7 @@ pub(crate) fn rewrite(_system: &str, _text: &str) -> Result<String, String> {
     Err("Turn into a prompt needs Apple Intelligence on a Mac".to_string())
 }
 
-/// How long the choice stays up before "Paste as is" happens by itself.
+/// How long the choice stays up before "Clean up" (the default) happens by itself.
 pub const CHIP_TIMEOUT_MS: u64 = 4000;
 
 /// What to do with a finished dictation.
@@ -459,6 +452,18 @@ pub fn preview(app: &AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn clean_up_really_rewrites() {
+        // The old instructions told the model to change as little as possible,
+        // so Clean up came back the same as As is.
+        let i = CLEANUP_INSTRUCTION.to_lowercase();
+        assert!(!i.contains("return the text unchanged"));
+        assert!(!i.contains("do not paraphrase"));
+        assert!(i.contains("filler"));
+        assert!(i.contains("clear sentences"));
+        assert!(i.contains("never add"));
+    }
 
     #[test]
     fn off_never_asks() {
