@@ -6,6 +6,13 @@
 <p align="center"><b>Talk instead of type on your Mac, offline.</b><br>Hold Control, Shift and Space, speak, let go. The text appears where your cursor is.</p>
 
 <p align="center">
+  <a href="https://github.com/Solomon-69/murmur/releases/latest"><img alt="Latest version" src="https://img.shields.io/github/v/release/Solomon-69/murmur?label=version&color=4a4a50&style=flat-square"></a>
+  <img alt="macOS 14 or later" src="https://img.shields.io/badge/macOS-14%2B-1f1d1a?style=flat-square&logo=apple&logoColor=white">
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-5b8a5a?style=flat-square"></a>
+  <img alt="Works offline" src="https://img.shields.io/badge/works-offline-4a4a50?style=flat-square">
+</p>
+
+<p align="center">
   <a href="https://github.com/Solomon-69/murmur/releases/latest/download/murmur.dmg"><img alt="Download for Mac" height="40" src="https://img.shields.io/badge/Download_for_Mac-1f1d1a?style=for-the-badge&logo=apple&logoColor=white"></a>
 </p>
 
