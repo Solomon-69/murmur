@@ -262,6 +262,14 @@
   }
 }
 
+/* Windows: the system's own Segoe UI Variable, like other Windows 11 apps. */
+:root[data-platform="windows"] {
+  --font-display: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --font-transcript:
+    "Segoe UI Variable Text", "Segoe UI", "murmur CJK Subset", sans-serif;
+}
+
 /* macOS's own CJK fonts already share their weights. */
 :root[data-platform="macos"] {
   --font-cjk-subset: var(--font-ui);

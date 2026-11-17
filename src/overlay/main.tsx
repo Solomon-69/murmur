@@ -2,6 +2,7 @@ import "../dev/mockTauri";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { listen } from "@tauri-apps/api/event";
+import { platform } from "@tauri-apps/plugin-os";
 import RecordingOverlay from "./RecordingOverlay";
 import {
   applyTheme,
@@ -14,6 +15,8 @@ import "@/i18n";
 // `data-theme` on its own document: last-known theme before render (shared
 // localStorage) to avoid a flash, reconcile with the persisted setting in case
 // the overlay booted first, then follow live changes.
+// Per-platform look (Windows gets an Acrylic-style bar, Segoe UI Variable).
+document.documentElement.dataset.platform = platform();
 applyTheme(getStoredTheme());
 syncThemeFromSettings();
 // Re-read settings so a true-black choice (stored beside `theme`) survives.

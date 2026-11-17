@@ -9,6 +9,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
+import { useOsType } from "@/hooks/useOsType";
 import { SettingContainer } from "../../ui/SettingContainer";
 import { ToggleSwitch } from "../../ui/ToggleSwitch";
 import { ShortcutActivationSetting } from "../ShortcutActivation";
@@ -62,7 +63,11 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 export const SmartFeaturesSettings: React.FC = () => {
   const { t } = useTranslation();
   const { settings, updateSetting } = useSettings();
+  const osType = useOsType();
   if (!settings) return null;
+  // Prompts, Command Mode and app styles run on Apple Intelligence, which
+  // only exists on a Mac: other systems never see settings that do nothing.
+  const onMac = osType === "macos";
 
   const s = "settings.smart";
   const chip = "settings.appearance.promptChip";
@@ -82,52 +87,54 @@ export const SmartFeaturesSettings: React.FC = () => {
     <div className="max-w-3xl w-full mx-auto space-y-5">
       <div className="px-1">
         <h1 className="text-xl font-semibold">{t(`${s}.title`)}</h1>
-        <p className="mt-1 text-[13px] text-ink-2">{t(`${s}.intro`)}</p>
+        <p className="mt-1 text-[13px] text-ink-2">{t(onMac ? `${s}.intro` : `${s}.introWindows`)}</p>
       </div>
 
-      <FeatureCard icon={Sparkles} {...card("prompt")}>
-        <SettingContainer
-          title={t(`${chip}.title`)}
-          description={t(`${chip}.description`)}
-          descriptionMode="tooltip"
-          grouped={true}
-        >
-          <SegmentedControl
-            ariaLabel={t(`${chip}.title`)}
-            options={["off", "smart", "ask", "always"].map((value) => ({
-              value,
-              label: t(`${chip}.${value}`),
-            }))}
-            value={chipMode}
-            onChange={(v) =>
-              updateSetting("prompt_chip_mode", v as typeof chipMode)
-            }
-          />
-        </SettingContainer>
-        {(chipMode === "ask" || chipMode === "always") && (
+      {onMac && (
+        <FeatureCard icon={Sparkles} {...card("prompt")}>
           <SettingContainer
-            title={t(`${chip}.minWords`)}
+            title={t(`${chip}.title`)}
             description={t(`${chip}.description`)}
             descriptionMode="tooltip"
             grouped={true}
           >
-            <input
-              type="number"
-              min={5}
-              max={2000}
-              defaultValue={minWords}
-              aria-label={t(`${chip}.minWords`)}
-              onBlur={(e) =>
-                updateSetting(
-                  "prompt_chip_min_words",
-                  Number(e.target.value) || 12,
-                )
+            <SegmentedControl
+              ariaLabel={t(`${chip}.title`)}
+              options={["off", "smart", "ask", "always"].map((value) => ({
+                value,
+                label: t(`${chip}.${value}`),
+              }))}
+              value={chipMode}
+              onChange={(v) =>
+                updateSetting("prompt_chip_mode", v as typeof chipMode)
               }
-              className="w-20 min-h-[30px] rounded-[10px] bg-wash px-2 text-center text-xs outline-none focus:outline-none"
             />
           </SettingContainer>
-        )}
-      </FeatureCard>
+          {(chipMode === "ask" || chipMode === "always") && (
+            <SettingContainer
+              title={t(`${chip}.minWords`)}
+              description={t(`${chip}.description`)}
+              descriptionMode="tooltip"
+              grouped={true}
+            >
+              <input
+                type="number"
+                min={5}
+                max={2000}
+                defaultValue={minWords}
+                aria-label={t(`${chip}.minWords`)}
+                onBlur={(e) =>
+                  updateSetting(
+                    "prompt_chip_min_words",
+                    Number(e.target.value) || 12,
+                  )
+                }
+                className="w-20 min-h-[30px] rounded-[10px] bg-wash px-2 text-center text-xs outline-none focus:outline-none"
+              />
+            </SettingContainer>
+          )}
+        </FeatureCard>
+      )}
 
       <FeatureCard icon={Wand2} {...card("commandMode")}>
         <ToggleSwitch
@@ -154,10 +161,11 @@ export const SmartFeaturesSettings: React.FC = () => {
         <SnippetsSettings bare />
       </FeatureCard>
 
-      <FeatureCard icon={Palette} {...card("appStyles")}>
-        <AppStylesSettings bare />
-      </FeatureCard>
-
+      {onMac && (
+        <FeatureCard icon={Palette} {...card("appStyles")}>
+          <AppStylesSettings bare />
+        </FeatureCard>
+      )}
     </div>
   );
 };
