@@ -52,19 +52,84 @@ public func isAppleIntelligenceAvailable() -> Int32 {
     }
 }
 
+/// Sessions made ahead of time, one per instruction text. `prewarm()` loads
+/// the on-device model and reads the instructions while the person is still
+/// talking, so the rewrite starts generating at once. Each session is used
+/// for one answer only (a session keeps its history), then dropped.
+@available(macOS 26.0, *)
+private final class SessionCache: @unchecked Sendable {
+    static let shared = SessionCache()
+    private let lock = NSLock()
+    private var sessions: [String: LanguageModelSession] = [:]
+
+    func take(_ instructions: String) -> LanguageModelSession? {
+        lock.lock()
+        defer { lock.unlock() }
+        return sessions.removeValue(forKey: instructions)
+    }
+
+    func peek(_ instructions: String) -> LanguageModelSession? {
+        lock.lock()
+        defer { lock.unlock() }
+        return sessions[instructions]
+    }
+
+    func put(_ instructions: String, _ session: LanguageModelSession) {
+        lock.lock()
+        defer { lock.unlock() }
+        // Only a handful of instruction texts exist; never let this grow.
+        if sessions.count >= 4 {
+            sessions.removeAll()
+        }
+        sessions[instructions] = session
+    }
+}
+
+private func stripPlainMarker(_ raw: String) -> (String, Bool) {
+    if raw.hasPrefix(PLAIN_OUTPUT_MARKER) {
+        return (String(raw.dropFirst(PLAIN_OUTPUT_MARKER.count)), true)
+    }
+    return (raw, false)
+}
+
+/// Loads the model and prepares a session for `systemPrompt` in the
+/// background. Returns 1 when a warm-up was started.
+@_cdecl("prewarm_apple_intelligence")
+public func prewarmAppleIntelligence(_ systemPrompt: UnsafePointer<CChar>) -> Int32 {
+    guard #available(macOS 26.0, *) else {
+        return 0
+    }
+    let model = SystemLanguageModel.default
+    guard model.availability == .available else {
+        return 0
+    }
+    let (instructions, _) = stripPlainMarker(String(cString: systemPrompt))
+    if let existing = SessionCache.shared.peek(instructions) {
+        existing.prewarm()
+        return 1
+    }
+    let session = LanguageModelSession(model: model, instructions: instructions)
+    session.prewarm()
+    SessionCache.shared.put(instructions, session)
+    return 1
+}
+
+/// Room for the answer: generous for edits that grow the text, yet a hard
+/// stop if the model starts repeating itself.
+private func responseTokenCap(for userContent: String) -> Int {
+    return max(800, userContent.count * 3 / 8 + 300)
+}
+
 @_cdecl("process_text_with_system_prompt_apple")
 public func processTextWithSystemPrompt(
     _ systemPrompt: UnsafePointer<CChar>,
     _ userContent: UnsafePointer<CChar>,
     maxTokens: Int32
 ) -> UnsafeMutablePointer<AppleLLMResponse> {
-    // A prompt starting with PLAIN_OUTPUT_MARKER wants free-form Markdown
-    // (Turn into a prompt); the one-field structured answer would flatten it.
-    let rawSystemPrompt = String(cString: systemPrompt)
-    let plainOutput = rawSystemPrompt.hasPrefix(PLAIN_OUTPUT_MARKER)
-    let swiftSystemPrompt = plainOutput
-        ? String(rawSystemPrompt.dropFirst(PLAIN_OUTPUT_MARKER.count))
-        : rawSystemPrompt
+    // A prompt starting with PLAIN_OUTPUT_MARKER wants free-form text
+    // (Turn into a prompt, Command Mode); the one-field structured answer is
+    // slower and would flatten Markdown.
+    let (swiftSystemPrompt, plainOutput) = stripPlainMarker(String(cString: systemPrompt))
     let swiftUserContent = String(cString: userContent)
     let responsePtr = ResponsePointer.allocate(capacity: 1)
     responsePtr.initialize(to: AppleLLMResponse(response: nil, success: 0, error_message: nil))
@@ -97,23 +162,35 @@ public func processTextWithSystemPrompt(
     Task.detached(priority: .userInitiated) {
         defer { semaphore.signal() }
         do {
-            let session = LanguageModelSession(
-                model: model,
-                instructions: swiftSystemPrompt
+            // A warmed-up session for these instructions when one is ready.
+            var session = SessionCache.shared.take(swiftSystemPrompt)
+                ?? LanguageModelSession(model: model, instructions: swiftSystemPrompt)
+            if session.isResponding {
+                session = LanguageModelSession(model: model, instructions: swiftSystemPrompt)
+            }
+            // Low temperature: the rewrite should be faithful, not creative.
+            let options = GenerationOptions(
+                temperature: 0.2,
+                maximumResponseTokens: responseTokenCap(for: swiftUserContent)
             )
             var output: String
 
             if plainOutput {
-                output = try await session.respond(to: swiftUserContent).content
+                output = try await session.respond(to: swiftUserContent, options: options).content
             } else {
                 do {
                     let structured = try await session.respond(
                         to: swiftUserContent,
-                        generating: CleanedTranscript.self
+                        generating: CleanedTranscript.self,
+                        options: options
                     )
                     output = structured.content.cleanedText
                 } catch {
-                    let fallbackGeneration = try await session.respond(to: swiftUserContent)
+                    let retry = LanguageModelSession(model: model, instructions: swiftSystemPrompt)
+                    let fallbackGeneration = try await retry.respond(
+                        to: swiftUserContent,
+                        options: options
+                    )
                     output = fallbackGeneration.content
                 }
             }

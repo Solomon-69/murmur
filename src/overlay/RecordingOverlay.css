@@ -297,7 +297,10 @@
   /* Equal side columns (min 22px to hold the cancel button) keep the center item
      — waveform or label — centered whether the pill is at min width or content-
      sized. */
-  grid-template-columns: minmax(var(--ov-side-w), 1fr) auto minmax(var(--ov-side-w), 1fr);
+  grid-template-columns: minmax(var(--ov-side-w), 1fr) auto minmax(
+      var(--ov-side-w),
+      1fr
+    );
   align-items: center;
 }
 /* The dot sits centred in a 22px box, the same size as the cancel button on
@@ -504,6 +507,21 @@
 :root[data-accent="fogteal"] {
   --s-accent: #7fa3a0;
 }
+:root[data-accent="caramel"] {
+  --s-accent: #b5793f;
+}
+:root[data-accent="umber"] {
+  --s-accent: #8a6a57;
+}
+:root[data-accent="sienna"] {
+  --s-accent: #a0522d;
+}
+:root[data-accent="mauve"] {
+  --s-accent: #a8818c;
+}
+:root[data-accent="peach"] {
+  --s-accent: #d29b82;
+}
 :root[data-accent]:not([data-accent="default"]) {
   --s-accent-soft: color-mix(in srgb, var(--s-accent) 20%, transparent);
 }
@@ -542,7 +560,10 @@
   /* Equal side columns (min 22px to hold the cancel button) keep the center item
      — waveform or label — centered whether the pill is at min width or content-
      sized. */
-  grid-template-columns: minmax(var(--ov-side-w), 1fr) auto minmax(var(--ov-side-w), 1fr);
+  grid-template-columns: minmax(var(--ov-side-w), 1fr) auto minmax(
+      var(--ov-side-w),
+      1fr
+    );
   align-items: center;
 }
 /* The dot sits centred in a 22px box, the same size as the cancel button on
@@ -756,6 +777,21 @@
 :root[data-accent="fogteal"] {
   --s-accent: #7fa3a0;
 }
+:root[data-accent="caramel"] {
+  --s-accent: #b5793f;
+}
+:root[data-accent="umber"] {
+  --s-accent: #8a6a57;
+}
+:root[data-accent="sienna"] {
+  --s-accent: #a0522d;
+}
+:root[data-accent="mauve"] {
+  --s-accent: #a8818c;
+}
+:root[data-accent="peach"] {
+  --s-accent: #d29b82;
+}
 :root[data-accent]:not([data-accent="default"]) {
   --s-accent-soft: color-mix(in srgb, var(--s-accent) 20%, transparent);
 }
@@ -856,22 +892,32 @@
   }
 }
 
-
 /* Clear glass: one flat see-through colour, thin outline, no gradient. */
 .scard {
   background: color-mix(in srgb, var(--color-background) 14%, transparent);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
-/* Clear glass tints (Settings > Appearance > Glass colour). Light washes over
-   the see-through bar; keep in sync with CLEAR_TINTS in BarPreview.tsx. */
-:root[data-ctint="frost"] .ov-stage { --c-tint: 255, 255, 255; }
-:root[data-ctint="sand"] .ov-stage { --c-tint: 236, 214, 180; }
-:root[data-ctint="rose"] .ov-stage { --c-tint: 240, 200, 204; }
-:root[data-ctint="sage"] .ov-stage { --c-tint: 200, 222, 196; }
-:root[data-ctint="sky"] .ov-stage { --c-tint: 196, 218, 242; }
+/* Clear glass tints (Settings > Appearance > Glass colour). Earthy washes
+   over the see-through bar, strong enough to read as a colour; keep in sync
+   with CLEAR_TINTS / CLEAR_TINT_ALPHA in BarPreview.tsx. */
+:root[data-ctint="sand"] .ov-stage {
+  --c-tint: 214, 186, 140;
+}
+:root[data-ctint="clay"] .ov-stage {
+  --c-tint: 196, 122, 92;
+}
+:root[data-ctint="sage"] .ov-stage {
+  --c-tint: 138, 160, 120;
+}
+:root[data-ctint="ochre"] .ov-stage {
+  --c-tint: 204, 152, 60;
+}
+:root[data-ctint="slate"] .ov-stage {
+  --c-tint: 112, 138, 166;
+}
 :root:not([data-glass="black"])[data-ctint]:not([data-ctint="clear"]) .scard {
-  background: rgba(var(--c-tint, 255, 255, 255), 0.32);
+  background: rgba(var(--c-tint, 255, 255, 255), 0.5);
 }
 
 /* ============================================================
@@ -895,19 +941,34 @@
   background: var(--s-accent);
   animation: swork-dot 1s ease-in-out infinite;
 }
-.swork i:nth-child(2) { animation-delay: 0.15s; }
-.swork i:nth-child(3) { animation-delay: 0.3s; }
+.swork i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.swork i:nth-child(3) {
+  animation-delay: 0.3s;
+}
 @keyframes swork-dot {
-  0%, 100% { transform: scale(0.6); opacity: 0.4; }
-  50% { transform: scale(1); opacity: 1; }
+  0%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 /* Prompt engineering: quicker, with a soft glow. */
 .swork-prompt i {
   animation-duration: 0.8s;
   box-shadow: 0 0 6px var(--s-accent-soft);
 }
-.swork-prompt i:nth-child(2) { animation-delay: 0.13s; }
-.swork-prompt i:nth-child(3) { animation-delay: 0.26s; }
+.swork-prompt i:nth-child(2) {
+  animation-delay: 0.13s;
+}
+.swork-prompt i:nth-child(3) {
+  animation-delay: 0.26s;
+}
 /* Prompt engineering: a softly glowing sparkle and a white-only shimmer
    sweeping across the word. */
 .sspark {
@@ -921,11 +982,16 @@
     sspark-pulse 1.6s ease-in-out infinite;
 }
 @keyframes sspark-spin {
-  from { rotate: 0deg; }
-  to { rotate: 90deg; } /* a four-point star looks the same every 90deg */
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 90deg;
+  } /* a four-point star looks the same every 90deg */
 }
 @keyframes sspark-pulse {
-  0%, 100% {
+  0%,
+  100% {
     scale: 0.8;
     opacity: 0.75;
     filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4));
@@ -1001,15 +1067,25 @@
 :root[data-glass="black"] .ov-stage {
   --g-tint: 10, 10, 12;
 }
-:root[data-glass="black"][data-tint="graphite"] .ov-stage { --g-tint: 38, 40, 46; }
-:root[data-glass="black"][data-tint="navy"] .ov-stage { --g-tint: 14, 24, 52; }
-:root[data-glass="black"][data-tint="plum"] .ov-stage { --g-tint: 40, 18, 46; }
-:root[data-glass="black"][data-tint="forest"] .ov-stage { --g-tint: 14, 38, 30; }
-:root[data-glass="black"][data-tint="cocoa"] .ov-stage { --g-tint: 46, 30, 22; }
+:root[data-glass="black"][data-tint="cocoa"] .ov-stage {
+  --g-tint: 70, 44, 28;
+}
+:root[data-glass="black"][data-tint="rust"] .ov-stage {
+  --g-tint: 92, 38, 22;
+}
+:root[data-glass="black"][data-tint="moss"] .ov-stage {
+  --g-tint: 36, 58, 32;
+}
+:root[data-glass="black"][data-tint="bronze"] .ov-stage {
+  --g-tint: 82, 62, 22;
+}
+:root[data-glass="black"][data-tint="slate"] .ov-stage {
+  --g-tint: 30, 44, 66;
+}
 /* Chosen colour stays put: thick enough that the desktop behind cannot tint
    it, and no colour boost (saturate) on what shows through. */
 :root[data-glass="black"] .scard {
-  background: rgba(var(--g-tint), 0.78);
+  background: rgba(var(--g-tint), 0.84);
   backdrop-filter: blur(22px) saturate(60%);
   -webkit-backdrop-filter: blur(22px) saturate(60%);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1022,4 +1098,24 @@
 :root[data-glass="black"] .stext-cap .sloading,
 :root[data-glass="black"] .stext-cap .ndetail {
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* ============================================================
+   Windows: an Acrylic-style bar (frosted, lightly tinted, square-ish
+   Windows 11 corners and Segoe UI Variable) instead of the Mac glass.
+   ============================================================ */
+:root[data-platform="windows"] .ov-stage {
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+}
+:root[data-platform="windows"] .scard {
+  border-radius: 8px;
+  backdrop-filter: blur(30px) saturate(125%);
+  -webkit-backdrop-filter: blur(30px) saturate(125%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+:root[data-platform="windows"]:not([data-glass="black"]) .scard:not(.cchip) {
+  background: color-mix(in srgb, var(--color-background) 72%, transparent);
 }

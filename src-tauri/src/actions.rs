@@ -112,14 +112,23 @@ struct TranscribeAction {
     command_mode: bool,
 }
 
-/// What the paste thread pastes: the Command Mode rewrite of the selection,
-/// or the dictation with its app style and prompt chip applied.
-fn text_to_paste(app: &AppHandle, text: String, command_mode: bool) -> Result<String, String> {
+/// What the paste thread pastes: the Command Mode rewrite of the selection
+/// (from the shortcut, or text selected when a Smart-mode dictation began),
+/// or the dictation through the prompt chip (which applies the app style
+/// when it pastes as spoken).
+fn text_to_paste(
+    app: &AppHandle,
+    text: String,
+    command_mode: bool,
+    selection: Option<String>,
+) -> Result<String, String> {
+    if let Some(selection) = selection {
+        return crate::command_mode::rewrite_text(app, &text, &selection);
+    }
     if command_mode {
         return crate::command_mode::rewrite_selection(app, &text);
     }
-    let styled = crate::app_styles::apply(app, text);
-    Ok(crate::prompt_chip::resolve(app, styled))
+    Ok(crate::prompt_chip::resolve(app, text))
 }
 
 /// Field name for structured output JSON schema
@@ -492,6 +501,8 @@ impl ShortcutAction for TranscribeAction {
         let start_time = Instant::now();
         debug!("TranscribeAction::start called for binding: {}", binding_id);
         crate::paste_guard::remember_target();
+        // Reads the selection (Smart mode) and warms the model up meanwhile.
+        crate::prompt_chip::on_recording_start(app, self.command_mode);
 
         // Load model in the background
         let tm = app.state::<Arc<TranscriptionManager>>();
@@ -722,6 +733,9 @@ impl ShortcutAction for TranscribeAction {
                 // have replaced it.
                 let input_silent = rm.last_input_silent();
                 crate::prompt_chip::predict_prompt(&ah, samples.len());
+                // Clears a predicted "Prompting" bar on every way out below;
+                // the paste thread takes it over when it starts.
+                let prompt_ui = crate::prompt_chip::WorkingGuard::new(&ah);
                 debug!(
                     "Recording stopped and samples retrieved in {:?}, sample count: {}",
                     stop_recording_time.elapsed(),
@@ -880,6 +894,7 @@ impl ShortcutAction for TranscribeAction {
                                 std::thread::Builder::new()
                                     .name("paste".into())
                                     .spawn(move || {
+                                        let _prompt_ui = prompt_ui;
                                         if rm_for_paste.was_cancelled_since(cancel_generation) {
                                             debug!(
                                                 "Transcription operation cancelled before paste"
@@ -909,10 +924,16 @@ impl ShortcutAction for TranscribeAction {
                                                 }
                                             }));
                                         }
+                                        let selection = if command_mode {
+                                            None
+                                        } else {
+                                            crate::prompt_chip::take_selection()
+                                        };
                                         let (outcome, notice) = match text_to_paste(
                                             &ah_clone,
                                             final_text,
                                             command_mode,
+                                            selection,
                                         )
                                         .and_then(|text| utils::paste(text, ah_clone.clone()))
                                         {

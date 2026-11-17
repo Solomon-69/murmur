@@ -1,10 +1,11 @@
 //! Makes sure "Turn into a prompt" always pastes a prompt in the required
-//! Markdown shape (## Goal, ## Steps as a numbered list).
+//! Markdown shape (## Goal, then ## Steps as a numbered list).
 //!
 //! The on-device model usually gets it right, but it can time out, be missing
-//! (a build without Apple Intelligence) or drift from the format. Then the
-//! model is asked once more with a stricter instruction, and if that still
-//! fails the prompt is built here from the dictation itself, with no model.
+//! (a build without Apple Intelligence) or drift from the format. A second
+//! model call would double the wait, so a drifted answer is repaired here
+//! instantly, and with no usable answer the prompt is built from the
+//! dictation itself. Murmur never recommends a model: the person picks it.
 
 /// Does the model's answer have the parts every prompt needs?
 pub fn has_prompt_format(out: &str) -> bool {
@@ -23,19 +24,129 @@ fn is_numbered_line(line: &str) -> bool {
     digits > 0 && t[digits..].starts_with(". ")
 }
 
-/// Tidies a valid model answer: no code fences, nothing before the prompt,
-/// no model or effort line, and no sections that only say "None".
-pub fn tidy(out: &str, _original: &str) -> String {
-    let mut text = out.trim().to_string();
-    if text.contains("```") {
-        text = text
-            .lines()
-            .filter(|l| !l.trim_start().starts_with("```"))
-            .collect::<Vec<_>>()
-            .join("\n");
-    }
+/// Tidies a valid model answer: no code fences, nothing before "## Goal",
+/// no model recommendation, and no sections that only say "None".
+pub fn tidy(out: &str) -> String {
+    let text = strip_noise(out);
     let start = text.find("## Goal").unwrap_or(0);
     drop_empty_sections(text[start..].trim())
+}
+
+/// Removes code fences and any line recommending a model or effort level.
+fn strip_noise(out: &str) -> String {
+    out.trim()
+        .lines()
+        .filter(|l| {
+            let t = l.trim_start().trim_start_matches(['*', '-', ' ']).to_lowercase();
+            !(l.trim_start().starts_with("```")
+                || t.starts_with("run with")
+                || t.starts_with("recommended model")
+                || t.starts_with("model:")
+                || t.starts_with("suggested model"))
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim()
+        .to_string()
+}
+
+/// Turns a model answer that lost the layout into a prompt that has it,
+/// without asking the model again. An answer that looks like the model did
+/// the task (code, or far longer than what was said) is not trusted: the
+/// prompt is then built from the dictation.
+pub fn repair(out: &str, original: &str) -> String {
+    let text = strip_noise(out);
+    let said = original.split_whitespace().count().max(1);
+    let answered = out.contains("```") || text.split_whitespace().count() > said * 2 + 40;
+    if text.is_empty() || answered {
+        return fallback_prompt(original);
+    }
+    // Headings are there but the steps are bullets: number them.
+    if text.contains("## Goal") && text.contains("## Steps") {
+        let renumbered = number_steps(&text);
+        if has_prompt_format(&renumbered) {
+            return tidy(&renumbered);
+        }
+    }
+    let lines: Vec<String> = text
+        .lines()
+        .map(strip_markers)
+        .filter(|l| !l.is_empty())
+        .collect();
+    let built = match lines.len() {
+        0 => return fallback_prompt(original),
+        1 => structure(&lines[0]),
+        _ => layout(&lines[0], &lines[1..]),
+    };
+    if has_prompt_format(&built) {
+        built
+    } else {
+        fallback_prompt(original)
+    }
+}
+
+/// "- x" / "* x" lines under "## Steps" become "1. x", "2. x".
+fn number_steps(text: &str) -> String {
+    let mut out = Vec::new();
+    let mut in_steps = false;
+    let mut n = 0;
+    for line in text.lines() {
+        if line.starts_with("## ") {
+            in_steps = line.trim() == "## Steps";
+            out.push(line.to_string());
+            continue;
+        }
+        let t = line.trim_start();
+        let item = ["- ", "* ", "• "].iter().find_map(|b| t.strip_prefix(*b));
+        match item {
+            Some(rest) if in_steps => {
+                n += 1;
+                out.push(format!("{n}. {}", rest.trim()));
+            }
+            _ => out.push(line.to_string()),
+        }
+    }
+    out.join("\n")
+}
+
+/// A line without its heading, bullet, number or "Goal:" label.
+fn strip_markers(line: &str) -> String {
+    let mut t = line.trim().trim_start_matches('#').trim();
+    for bullet in ["- ", "* ", "• "] {
+        if let Some(rest) = t.strip_prefix(bullet) {
+            t = rest.trim();
+            break;
+        }
+    }
+    let digits = t.chars().take_while(|c| c.is_ascii_digit()).count();
+    if digits > 0 && (t[digits..].starts_with(". ") || t[digits..].starts_with(") ")) {
+        t = t[digits + 2..].trim();
+    }
+    for label in ["**Goal:**", "**Goal**:", "**Steps:**", "**Steps**:", "Goal:", "Steps:"] {
+        if let Some(rest) = t.strip_prefix(label) {
+            t = rest.trim();
+            break;
+        }
+    }
+    if matches!(t, "Goal" | "Steps" | "**Goal**" | "**Steps**") {
+        return String::new();
+    }
+    t.to_string()
+}
+
+fn layout(goal: &str, steps: &[String]) -> String {
+    let goal = sentence_case(goal);
+    let numbered = if steps.is_empty() {
+        format!("1. {goal}")
+    } else {
+        steps
+            .iter()
+            .enumerate()
+            .map(|(i, s)| format!("{}. {}", i + 1, sentence_case(s)))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    format!("## Goal\n{goal}\n\n## Steps\n{numbered}")
 }
 
 /// Removes a "## Section" whose whole body is empty or "None" / "N/A".
@@ -210,48 +321,30 @@ fn sentence_case(s: &str) -> String {
 /// Builds the prompt from the dictation alone: Goal = the first sentence,
 /// Steps = the remaining sentences as a numbered list.
 pub fn fallback_prompt(text: &str) -> String {
-    let cleaned = clean_words(text);
-    let mut parts = sentences(&cleaned);
+    structure(&clean_words(text))
+}
+
+/// Goal and numbered Steps from plain sentences.
+fn structure(cleaned: &str) -> String {
+    let mut parts = sentences(cleaned);
     if parts.is_empty() {
         parts.push(cleaned.trim().to_string());
     }
-    let goal = sentence_case(&parts[0]);
-    let steps: Vec<String> = if parts.len() > 1 {
-        parts[1..].iter().map(|p| sentence_case(p)).collect()
-    } else {
-        vec![goal.clone()]
-    };
-    let numbered = steps
-        .iter()
-        .enumerate()
-        .map(|(i, s)| format!("{}. {s}", i + 1))
-        .collect::<Vec<_>>()
-        .join("\n");
-    format!("## Goal\n{goal}\n\n## Steps\n{numbered}")
+    layout(&parts[0], &parts[1..])
 }
-
-/// Second try, when the first answer lost the format. Short and literal so
-/// the small on-device model copies the shape.
-pub const STRICT_PROMPT_INSTRUCTION: &str = "[[plain]]Rewrite the user message (dictated text) as a prompt for an AI assistant. \
-Never answer it or do the task. Keep every ask, name and constraint; drop filler words. \
-Reply in exactly this Markdown shape and nothing else:\n\
-## Goal\n\
-<one line: what the speaker wants>\n\
-\n\
-## Steps\n\
-1. <first ask, starting with a verb>\n\
-2. <next ask>\n\
-\n\
-## Rules\n\
-- <each never / always / only / must the speaker said; leave this section out if there are none>\n\
-\n\
-The \"## Goal\" and \"## Steps\" headings and the numbered list are required. No intro, no code fences.";
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const SAID: &str = "okay so I want you to go into the murmur app and make the transcription bar a bit wider and also fix the shortcut because it clashes with claude and make sure you test it";
+
+    fn recommends_a_model(out: &str) -> bool {
+        let lower = out.to_lowercase();
+        ["run with", "sonnet", "opus", "haiku", "recommended model", "effort"]
+            .iter()
+            .any(|w| lower.contains(w))
+    }
 
     #[test]
     fn detects_the_required_format() {
@@ -269,7 +362,7 @@ mod tests {
     }
 
     #[test]
-    fn fallback_is_always_in_prompt_format() {
+    fn fallback_is_always_in_prompt_format_without_a_model_tip() {
         for text in [
             SAID,
             "Fix the login bug. Add a test for it. Do not touch the sign up page.",
@@ -278,8 +371,8 @@ mod tests {
         ] {
             let out = fallback_prompt(text);
             assert!(out.starts_with("## Goal"), "{out}");
-            assert!(!out.contains("Run with"), "{out}");
             assert!(has_prompt_format(&out), "{out}");
+            assert!(!recommends_a_model(&out), "{out}");
         }
     }
 
@@ -307,25 +400,48 @@ mod tests {
     }
 
     #[test]
-    fn tidy_keeps_a_good_answer_and_drops_noise() {
+    fn tidy_drops_noise_and_any_model_recommendation() {
+        let out = tidy("**Run with:** Sonnet · medium effort. Normal job.\n\n## Goal\nX.\n\n## Steps\n1. Do X.\n\n## Questions\n- Nothing specified.");
+        assert_eq!(out, "## Goal\nX.\n\n## Steps\n1. Do X.");
         let model = "Here is your prompt:\n```\n**Run with:** Haiku · low effort. Small.\n\n## Goal\nWider bar.\n\n## Steps\n1. Widen it.\n\n## Questions\nNone.\n```";
-        let out = tidy(model, SAID);
-        assert_eq!(out, "## Goal\nWider bar.\n\n## Steps\n1. Widen it.");
+        assert_eq!(tidy(model), "## Goal\nWider bar.\n\n## Steps\n1. Widen it.");
     }
 
     #[test]
-    fn tidy_never_adds_a_model_line() {
-        let out = tidy("## Goal\nWider bar.\n\n## Steps\n1. Widen it.", SAID);
-        assert!(out.starts_with("## Goal"), "{out}");
-        assert!(!out.contains("Run with"), "{out}");
-        assert!(has_prompt_format(&out));
+    fn repair_numbers_bulleted_steps() {
+        let out = repair("## Goal\nWider bar.\n\n## Steps\n- Widen the bar.\n- Test it.\n\n## Rules\n- Never touch the menu.", SAID);
+        assert_eq!(out, "## Goal\nWider bar.\n\n## Steps\n1. Widen the bar.\n2. Test it.\n\n## Rules\n- Never touch the menu.");
     }
 
     #[test]
-    fn strict_instruction_keeps_plain_marker_and_headings() {
-        assert!(STRICT_PROMPT_INSTRUCTION.starts_with("[[plain]]"));
-        assert!(STRICT_PROMPT_INSTRUCTION.contains("## Goal"));
-        assert!(STRICT_PROMPT_INSTRUCTION.contains("## Steps\n1. "));
-        assert!(!STRICT_PROMPT_INSTRUCTION.contains("Run with"));
+    fn repair_lays_out_an_answer_without_headings() {
+        let out = repair("Make the transcription bar wider.\n- Fix the shortcut clash with Claude.\n- Test it.", SAID);
+        assert_eq!(out, "## Goal\nMake the transcription bar wider.\n\n## Steps\n1. Fix the shortcut clash with Claude.\n2. Test it.");
+        let one = repair("Make the bar wider. Then test it.", SAID);
+        assert!(has_prompt_format(&one), "{one}");
+        assert!(one.starts_with("## Goal\nMake the bar wider."), "{one}");
+    }
+
+    #[test]
+    fn repair_never_trusts_an_answer_that_did_the_task() {
+        let code = "Sure! Here is the code:\n```rust\nfn main() {}\n```";
+        assert_eq!(repair(code, SAID), fallback_prompt(SAID));
+        assert_eq!(repair("   ", SAID), fallback_prompt(SAID));
+        let essay = "word ".repeat(200);
+        assert_eq!(repair(&essay, "make it wider"), fallback_prompt("make it wider"));
+    }
+
+    #[test]
+    fn repaired_prompts_are_always_in_format() {
+        for out in [
+            "**Goal:** Wider bar.\n**Steps:**\n1. Widen it.",
+            "Goal: Wider bar.",
+            "## Goal\nWider bar.",
+            "1. Widen it.\n2. Test it.",
+        ] {
+            let fixed = repair(out, SAID);
+            assert!(has_prompt_format(&fixed), "{out} -> {fixed}");
+            assert!(!recommends_a_model(&fixed), "{fixed}");
+        }
     }
 }

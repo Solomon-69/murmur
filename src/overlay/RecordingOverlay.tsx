@@ -71,6 +71,12 @@ const SLOW_MODEL_LOAD_MS = 2000;
 // Matches the delay in `hide_recording_overlay`, so a notice can fade out.
 const OVERLAY_FADE_MS = 300;
 
+// Hard limits, so the bar can never stay on "Prompting" or "Transcribing":
+// the longest prompt rewrite (22 s, prompt_chip.rs) plus a margin, and a
+// generous cap for transcribing very long recordings.
+const MAX_PROMPTING_MS = 27_000;
+const MAX_WORKING_MS = 90_000;
+
 // 13px padding on each side, the 16px badge and its 7px gap.
 const NOTICE_PILL_CHROME = 49;
 
@@ -81,7 +87,8 @@ const applyAppearance = (settings: AppSettings) => {
   const root = document.documentElement;
   const size = settings.overlay_size ?? "compact";
   root.style.setProperty("--ov-scale", String(OVERLAY_SCALE[size] ?? 0.92));
-  root.style.setProperty("--ov-opacity", String(settings.overlay_opacity ?? 1));
+  // The opacity option was removed: the bar is always fully opaque glass.
+  root.style.setProperty("--ov-opacity", "1");
   root.dataset.accent = normalizeAccent(settings.overlay_accent);
   root.dataset.glass = settings.overlay_glass ?? "clear";
   root.dataset.tint = settings.overlay_glass_tint ?? "black";
@@ -193,6 +200,9 @@ const RecordingOverlay: React.FC = () => {
         // recording-ready while the awaits below are in flight; resetting after
         // them would overwrite that event and leave the overlay stuck arming.
         if (overlayState === "recording" || overlayState === "streaming") {
+          // A new dictation never inherits an earlier "Prompting" bar.
+          setChip(null);
+          setChipWork(null);
           setCaptureReady(false);
           smoothedLevelsRef.current = Array(16).fill(0);
           wavePeakRef.current = WAVE_PEAK_FLOOR;
@@ -252,6 +262,7 @@ const RecordingOverlay: React.FC = () => {
       const unlistenHide = await listen("hide-overlay", () => {
         setIsVisible(false);
         setChip(null);
+        setChipWork(null);
         setCaptureReady(false);
         // A notice keeps rendering while it fades. Dropping the transcript here
         // stops a later notice from showing an old session's text.
@@ -346,6 +357,29 @@ const RecordingOverlay: React.FC = () => {
     const id = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(id);
   }, [state, isVisible, captureReady]);
+
+  // Watchdogs: whatever the backend does, "Prompting" / "Editing" clears
+  // after MAX_PROMPTING_MS and a working bar hides after MAX_WORKING_MS.
+  useEffect(() => {
+    if (!chipWork) return;
+    const id = setTimeout(() => setChipWork(null), MAX_PROMPTING_MS);
+    return () => clearTimeout(id);
+  }, [chipWork]);
+
+  const stuckWorking =
+    isVisible &&
+    (state === "transcribing" ||
+      state === "processing" ||
+      (state === "streaming" && phase !== "listening"));
+  useEffect(() => {
+    if (!stuckWorking) return;
+    const id = setTimeout(() => {
+      setIsVisible(false);
+      setChip(null);
+      setChipWork(null);
+    }, MAX_WORKING_MS);
+    return () => clearTimeout(id);
+  }, [stuckWorking, state, phase]);
 
   // Stick to the bottom as text streams in — but only while pinned, so a user who
   // has scrolled up to read history isn't yanked back down by the next chunk.
@@ -449,13 +483,14 @@ const RecordingOverlay: React.FC = () => {
   // grid as the listening row, so the animation is centered.
   // Working is over in a moment, so there is no cross: just the animation,
   // exactly centred, with identical space on both sides.
-  const workingRow = (label: string, kind: WorkKind, _showCancel?: boolean) => (
+  const workingRow = (
+    label: string,
+    kind: WorkKind,
+    _showCancel?: boolean,
+    word: string = t("overlay.chip.prompting"),
+  ) => (
     <div className="sbase sbase-work">
-      <WorkAnimation
-        kind={kind}
-        label={label}
-        word={t("overlay.chip.prompting")}
-      />
+      <WorkAnimation kind={kind} label={label} word={word} />
     </div>
   );
 
@@ -471,9 +506,14 @@ const RecordingOverlay: React.FC = () => {
     workingRow(
       chipWork === "clean"
         ? t("overlay.chip.cleaning")
-        : t("overlay.chip.engineering"),
+        : chipWork === "edit"
+          ? t("overlay.chip.editing")
+          : t("overlay.chip.engineering"),
       chipWork === "clean" ? "transcribe" : "prompt",
       false,
+      chipWork === "edit"
+        ? t("overlay.chip.editing")
+        : t("overlay.chip.prompting"),
     );
   // One segmented capsule: Prompt | Clean up (the default, in the middle) | As is, equal widths, with the
   // countdown as a thin line along its bottom. Same height as every other row.

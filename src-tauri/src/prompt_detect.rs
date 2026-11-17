@@ -49,6 +49,20 @@ pub fn spoken_trigger(text: &str) -> Option<String> {
         Some(cleaned)
     }
 }
+/// True when what was said is only a request to turn something into a
+/// prompt ("turn this into a prompt", "make it a proper prompt please").
+/// Used with selected text: the selection becomes the prompt.
+pub fn asks_for_prompt(text: &str) -> bool {
+    if !TRIGGER.is_match(text) {
+        return false;
+    }
+    let rest = TRIGGER.replace_all(text, " ");
+    rest.split_whitespace()
+        .filter(|w| w.chars().any(char::is_alphanumeric))
+        .count()
+        <= 3
+}
+
 /// Score needed in an AI app (the app already counts for +3).
 const THRESHOLD_AI_APP: i32 = 5;
 /// Score needed anywhere else (higher, so wording alone rarely wins).
@@ -373,5 +387,15 @@ mod tests {
     fn normal_email_text_stays_normal() {
         let email = "Can you send me the invoice by Friday, I need it for the accounts and the meeting with the bank next week";
         assert_eq!(detect(email, SAFARI), Detected::Normal);
+    }
+
+    #[test]
+    fn asks_for_prompt_only_when_that_is_all_that_was_said() {
+        assert!(asks_for_prompt("Turn this into a prompt."));
+        assert!(asks_for_prompt("okay make this a proper prompt please"));
+        assert!(!asks_for_prompt("make it shorter"));
+        assert!(!asks_for_prompt(
+            "fix the login bug and add a test for it then turn this into a prompt"
+        ));
     }
 }

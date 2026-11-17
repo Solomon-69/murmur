@@ -33,6 +33,20 @@ pub fn frontmost_bundle_id() -> Option<String> {
     }
 }
 
+/// The text selected in the focused field of the app in front, read through
+/// Accessibility: no keystroke, no clipboard, no focus change. None when
+/// nothing is selected, the app does not say, or access is not granted.
+pub fn frontmost_selected_text() -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        mac::frontmost_selected_text()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        None
+    }
+}
+
 /// Process id of the app in front. macOS only.
 pub fn frontmost_pid() -> Option<i32> {
     #[cfg(target_os = "macos")]
@@ -101,11 +115,30 @@ mod mac {
             value: *mut CFTypeRef,
         ) -> AXError;
         fn AXValueGetValue(value: CFTypeRef, the_type: u32, out: *mut c_void) -> bool;
+        fn AXUIElementSetAttributeValue(
+            element: AXUIElementRef,
+            attribute: CFTypeRef,
+            value: CFTypeRef,
+        ) -> AXError;
     }
 
     #[link(name = "CoreFoundation", kind = "framework")]
     extern "C" {
         fn CFRelease(cf: CFTypeRef);
+        static kCFBooleanTrue: CFTypeRef;
+    }
+
+    /// Last app asked to switch its accessibility tree on (Electron apps such
+    /// as Claude, Slack or VS Code only expose the selection after this).
+    static MANUAL_AX_PID: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+
+    fn enable_manual_accessibility(app: CFTypeRef, pid: i32) {
+        if MANUAL_AX_PID.swap(pid, std::sync::atomic::Ordering::SeqCst) == pid {
+            return;
+        }
+        let attr = NSString::from_str("AXManualAccessibility");
+        let attr_ref = objc2::rc::Retained::as_ptr(&attr) as CFTypeRef;
+        let _ = unsafe { AXUIElementSetAttributeValue(app, attr_ref, kCFBooleanTrue) };
     }
 
     /// Owns one CoreFoundation reference and releases it on drop.
@@ -199,6 +232,37 @@ mod mac {
             }
             Some((*bundle_id).to_string())
         }
+    }
+
+    /// Selected text of the focused element in the frontmost app.
+    pub fn frontmost_selected_text() -> Option<String> {
+        if !unsafe { AXIsProcessTrusted() } {
+            return None;
+        }
+        let pid = frontmost_pid()?;
+        if pid == std::process::id() as i32 {
+            return None;
+        }
+        let app = Cf(unsafe { AXUIElementCreateApplication(pid) });
+        if app.0.is_null() {
+            return None;
+        }
+        unsafe { AXUIElementSetMessagingTimeout(app.0, AX_TIMEOUT_SECS) };
+        let selected = copy_attr(app.0, "AXFocusedUIElement")
+            .and_then(|focused| copy_attr(focused.0, "AXSelectedText"));
+        let Some(selected) = selected else {
+            // Next time this app will answer, if it is an Electron app.
+            enable_manual_accessibility(app.0, pid);
+            return None;
+        };
+        // AXSelectedText is a CFString, toll-free bridged to NSString.
+        let object = selected.0 as *mut AnyObject;
+        let is_string: bool = unsafe { msg_send![object, isKindOfClass: class!(NSString)] };
+        if !is_string {
+            return None;
+        }
+        let text = unsafe { (*(selected.0 as *const NSString)).to_string() };
+        (!text.trim().is_empty()).then_some(text)
     }
 
     /// (focused window frame, focused element frame) of the frontmost app.

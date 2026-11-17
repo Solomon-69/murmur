@@ -29,6 +29,20 @@ extern "C" {
     ) -> *mut AppleLLMResponse;
 }
 
+extern "C" {
+    pub fn prewarm_apple_intelligence(system_prompt: *const c_char) -> c_int;
+}
+
+/// Starts loading the on-device model and prepares a session for
+/// `system_prompt`, so the next call with the same prompt answers sooner.
+/// Returns at once; true when a warm-up was started.
+pub fn prewarm(system_prompt: &str) -> bool {
+    let Ok(system_cstr) = CString::new(system_prompt) else {
+        return false;
+    };
+    unsafe { prewarm_apple_intelligence(system_cstr.as_ptr()) == 1 }
+}
+
 /// Process text with Apple Intelligence using separate system prompt and user content
 pub fn process_text_with_system_prompt(
     system_prompt: &str,

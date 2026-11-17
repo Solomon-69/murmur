@@ -11,6 +11,11 @@ public func isAppleIntelligenceAvailable() -> Int32 {
     return 0
 }
 
+@_cdecl("prewarm_apple_intelligence")
+public func prewarmAppleIntelligence(_ systemPrompt: UnsafePointer<CChar>) -> Int32 {
+    return 0
+}
+
 @_cdecl("process_text_with_system_prompt_apple")
 public func processTextWithSystemPrompt(
     _ systemPrompt: UnsafePointer<CChar>,
