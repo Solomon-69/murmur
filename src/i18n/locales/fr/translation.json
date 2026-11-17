@@ -853,7 +853,7 @@
         "title": "Diagnostic du clavier",
         "description": "Vérifie si les événements clavier atteignent murmur. Seul le nombre d'événements est enregistré, jamais les touches sur lesquelles vous appuyez.",
         "run": "Lancer un diagnostic de 10 s",
-        "running": "Écoute en cours… appuyez plusieurs fois sur votre raccourci (par ex. Control+Shift+Space)",
+        "running": "Écoute en cours… appuyez plusieurs fois sur votre raccourci (par ex. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "activé",
         "disabled": "désactivé",
@@ -901,6 +901,57 @@
           "description": "Inférence haute performance du modèle de reconnaissance vocale automatique Whisper d'OpenAI",
           "details": "murmur utilise ggml pour un traitement rapide et local de la parole en texte. Merci au travail incroyable de Georgi Gerganov et des contributeurs."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Caramel",
+        "umber": "Terre d'ombre",
+        "sienna": "Sienne",
+        "mauve": "Mauve",
+        "peach": "Pêche",
+        "default": "Gris",
+        "terracotta": "Terre cuite",
+        "olive": "Olive",
+        "ochre": "Ocre",
+        "clay": "Argile",
+        "moss": "Mousse",
+        "sand": "Sable",
+        "electric": "Électrique",
+        "coral": "Corail",
+        "violet": "Violet",
+        "tangerine": "Mandarine",
+        "magenta": "Magenta",
+        "aqua": "Aqua",
+        "sage": "Sauge",
+        "rose": "Rose",
+        "slate": "Ardoise",
+        "lilac": "Lilas",
+        "mushroom": "Champignon",
+        "fogteal": "Bleu-vert brume",
+        "groups": {
+          "neutral": "Neutres",
+          "earth": "Terre",
+          "vibey": "Vifs",
+          "muted": "Doux"
+        },
+        "more": "Plus de couleurs"
+      },
+      "clearTint": {
+        "clear": "Transparent",
+        "sand": "Sable",
+        "clay": "Argile",
+        "sage": "Sauge",
+        "ochre": "Ocre",
+        "slate": "Ardoise"
+      },
+      "tint": {
+        "black": "Noir",
+        "cocoa": "Cacao",
+        "rust": "Rouille",
+        "moss": "Mousse",
+        "bronze": "Bronze",
+        "slate": "Ardoise"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transcription...",
     "processing": "Traitement...",
-    "loadingModel": "Chargement du modèle..."
+    "loadingModel": "Chargement du modèle...",
+    "chip": {
+      "editing": "Modification"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} bloque peut-être 1 raccourci",

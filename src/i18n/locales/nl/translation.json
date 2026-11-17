@@ -853,7 +853,7 @@
         "title": "Toetsenborddiagnose",
         "description": "Controleert of toetsenbordgebeurtenissen murmur bereiken. Alleen het aantal gebeurtenissen wordt vastgelegd — nooit welke toetsen je indrukt.",
         "run": "Diagnose van 10 s uitvoeren",
-        "running": "Luisteren… druk je sneltoets een paar keer in (bijv. Control+Shift+Space)",
+        "running": "Luisteren… druk je sneltoets een paar keer in (bijv. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "ingeschakeld",
         "disabled": "uitgeschakeld",
@@ -901,6 +901,57 @@
           "description": "Krachtige tensorbibliotheek voor lokale AI-verwerking",
           "details": "murmur's lokale spraak-naar-tekst is gebouwd op transcribe.cpp en ggml. Met dank aan het geweldige werk van Georgi Gerganov en alle bijdragers."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karamel",
+        "umber": "Omber",
+        "sienna": "Siena",
+        "mauve": "Mauve",
+        "peach": "Perzik",
+        "default": "Grijs",
+        "terracotta": "Terracotta",
+        "olive": "Olijf",
+        "ochre": "Oker",
+        "clay": "Klei",
+        "moss": "Mos",
+        "sand": "Zand",
+        "electric": "Elektrisch",
+        "coral": "Koraal",
+        "violet": "Violet",
+        "tangerine": "Mandarijn",
+        "magenta": "Magenta",
+        "aqua": "Aqua",
+        "sage": "Salie",
+        "rose": "Roze",
+        "slate": "Leisteen",
+        "lilac": "Lila",
+        "mushroom": "Paddenstoel",
+        "fogteal": "Mistturkoois",
+        "groups": {
+          "neutral": "Neutraal",
+          "earth": "Aarde",
+          "vibey": "Fel",
+          "muted": "Gedempt"
+        },
+        "more": "Meer kleuren"
+      },
+      "clearTint": {
+        "clear": "Helder",
+        "sand": "Zand",
+        "clay": "Klei",
+        "sage": "Salie",
+        "ochre": "Oker",
+        "slate": "Leisteen"
+      },
+      "tint": {
+        "black": "Zwart",
+        "cocoa": "Cacao",
+        "rust": "Roest",
+        "moss": "Mos",
+        "bronze": "Brons",
+        "slate": "Leisteen"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transcriberen...",
     "processing": "Verwerken...",
-    "loadingModel": "Model laden..."
+    "loadingModel": "Model laden...",
+    "chip": {
+      "editing": "Bewerken"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokkeert mogelijk 1 sneltoets",

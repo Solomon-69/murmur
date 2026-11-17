@@ -853,7 +853,7 @@
         "title": "Diagnòstic del teclat",
         "description": "Comprova si els esdeveniments del teclat arriben al murmur. Només se'n registra el recompte, mai les tecles que premeu.",
         "run": "Executa un diagnòstic de 10 s",
-        "running": "S'està escoltant… prema la drecera unes quantes vegades (p. ex., Control+Shift+Space)",
+        "running": "S'està escoltant… prema la drecera unes quantes vegades (p. ex., Option+Space)",
         "secureInputLabel": "Entrada segura",
         "enabled": "activada",
         "disabled": "desactivada",
@@ -901,6 +901,57 @@
           "description": "Biblioteca de tensors d'alt rendiment per a la inferència d'aprenentatge automàtic al dispositiu",
           "details": "La transcripció local de veu a text del murmur es basa en el transcribe.cpp i el ggml. Gràcies a la gran feina de Georgi Gerganov i dels col·laboradors."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Caramel",
+        "umber": "Ombra",
+        "sienna": "Siena",
+        "mauve": "Malva",
+        "peach": "Préssec",
+        "default": "Gris",
+        "terracotta": "Terracota",
+        "olive": "Oliva",
+        "ochre": "Ocre",
+        "clay": "Argila",
+        "moss": "Molsa",
+        "sand": "Sorra",
+        "electric": "Elèctric",
+        "coral": "Corall",
+        "violet": "Violeta",
+        "tangerine": "Mandarina",
+        "magenta": "Magenta",
+        "aqua": "Aqua",
+        "sage": "Sàlvia",
+        "rose": "Rosa",
+        "slate": "Pissarra",
+        "lilac": "Lila",
+        "mushroom": "Bolet",
+        "fogteal": "Verd boira",
+        "groups": {
+          "neutral": "Neutres",
+          "earth": "Terra",
+          "vibey": "Vius",
+          "muted": "Suaus"
+        },
+        "more": "Més colors"
+      },
+      "clearTint": {
+        "clear": "Transparent",
+        "sand": "Sorra",
+        "clay": "Argila",
+        "sage": "Sàlvia",
+        "ochre": "Ocre",
+        "slate": "Pissarra"
+      },
+      "tint": {
+        "black": "Negre",
+        "cocoa": "Cacau",
+        "rust": "Rovell",
+        "moss": "Molsa",
+        "bronze": "Bronze",
+        "slate": "Pissarra"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "S'està transcrivint...",
     "processing": "S'està processant...",
-    "loadingModel": "S'està carregant el model..."
+    "loadingModel": "S'està carregant el model...",
+    "chip": {
+      "editing": "Editant"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} pot estar blocant 1 drecera",

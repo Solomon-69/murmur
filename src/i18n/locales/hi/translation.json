@@ -853,7 +853,7 @@
         "title": "कीबोर्ड डायग्नोस्टिक",
         "description": "जाँचता है कि कीबोर्ड इवेंट murmur तक पहुँच रहे हैं या नहीं. सिर्फ़ इवेंट की गिनती रिकॉर्ड होती है — कभी नहीं कि आपने कौन-सी कुंजियाँ दबाईं.",
         "run": "10 सेकंड का डायग्नोस्टिक चलाएँ",
-        "running": "सुन रहे हैं… अपना शॉर्टकट कुछ बार दबाएँ (जैसे Control+Shift+Space)",
+        "running": "सुन रहे हैं… अपना शॉर्टकट कुछ बार दबाएँ (जैसे Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "चालू",
         "disabled": "बंद",
@@ -901,6 +901,57 @@
           "description": "डिवाइस पर ही मशीन लर्निंग इन्फ़रेंस के लिए हाई-परफ़ॉर्मेंस टेंसर लाइब्रेरी",
           "details": "murmur का लोकल स्पीच-टू-टेक्स्ट transcribe.cpp और ggml पर आधारित है. Georgi Gerganov और योगदान देने वालों के शानदार काम के लिए धन्यवाद."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "कैरेमल",
+        "umber": "अम्बर",
+        "sienna": "सिएना",
+        "mauve": "मॉव",
+        "peach": "आड़ू",
+        "default": "धूसर",
+        "terracotta": "टेराकोटा",
+        "olive": "जैतूनी",
+        "ochre": "गेरुआ",
+        "clay": "मिट्टी",
+        "moss": "काई",
+        "sand": "रेत",
+        "electric": "इलेक्ट्रिक",
+        "coral": "मूंगा",
+        "violet": "बैंगनी",
+        "tangerine": "नारंगी",
+        "magenta": "मैजेंटा",
+        "aqua": "एक्वा",
+        "sage": "सेज",
+        "rose": "गुलाबी",
+        "slate": "स्लेट",
+        "lilac": "लाइलैक",
+        "mushroom": "मशरूम",
+        "fogteal": "धुंधला फ़िरोज़ी",
+        "groups": {
+          "neutral": "तटस्थ",
+          "earth": "मिट्टी के रंग",
+          "vibey": "चटकीले",
+          "muted": "हल्के"
+        },
+        "more": "और रंग"
+      },
+      "clearTint": {
+        "clear": "पारदर्शी",
+        "sand": "रेत",
+        "clay": "मिट्टी",
+        "sage": "सेज",
+        "ochre": "गेरू",
+        "slate": "स्लेट"
+      },
+      "tint": {
+        "black": "काला",
+        "cocoa": "कोको",
+        "rust": "ज़ंग",
+        "moss": "काई",
+        "bronze": "कांस्य",
+        "slate": "स्लेट"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "ट्रांसक्राइब हो रहा है...",
     "processing": "प्रोसेस हो रहा है...",
-    "loadingModel": "मॉडल लोड हो रहा है..."
+    "loadingModel": "मॉडल लोड हो रहा है...",
+    "chip": {
+      "editing": "संपादन"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} शायद 1 शॉर्टकट को ब्लॉक कर रहा है",

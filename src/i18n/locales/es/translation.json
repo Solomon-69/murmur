@@ -853,7 +853,7 @@
         "title": "Diagnóstico del teclado",
         "description": "Comprueba si los eventos de teclado llegan a murmur. Solo se registra el número de eventos, nunca qué teclas pulsas.",
         "run": "Ejecutar diagnóstico de 10 s",
-        "running": "Escuchando… pulsa tu atajo varias veces (p. ej. Control+Shift+Space)",
+        "running": "Escuchando… pulsa tu atajo varias veces (p. ej. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "activado",
         "disabled": "desactivado",
@@ -901,6 +901,57 @@
           "description": "Biblioteca de tensores de alto rendimiento para inferencia de aprendizaje automático en el dispositivo",
           "details": "El habla a texto local de murmur está construido sobre transcribe.cpp y ggml. Gracias al increíble trabajo de Georgi Gerganov y colaboradores."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Caramelo",
+        "umber": "Sombra",
+        "sienna": "Siena",
+        "mauve": "Malva",
+        "peach": "Melocotón",
+        "default": "Gris",
+        "terracotta": "Terracota",
+        "olive": "Oliva",
+        "ochre": "Ocre",
+        "clay": "Arcilla",
+        "moss": "Musgo",
+        "sand": "Arena",
+        "electric": "Eléctrico",
+        "coral": "Coral",
+        "violet": "Violeta",
+        "tangerine": "Mandarina",
+        "magenta": "Magenta",
+        "aqua": "Aguamarina",
+        "sage": "Salvia",
+        "rose": "Rosa",
+        "slate": "Pizarra",
+        "lilac": "Lila",
+        "mushroom": "Champiñón",
+        "fogteal": "Verde niebla",
+        "groups": {
+          "neutral": "Neutros",
+          "earth": "Tierra",
+          "vibey": "Vivos",
+          "muted": "Suaves"
+        },
+        "more": "Más colores"
+      },
+      "clearTint": {
+        "clear": "Transparente",
+        "sand": "Arena",
+        "clay": "Arcilla",
+        "sage": "Salvia",
+        "ochre": "Ocre",
+        "slate": "Pizarra"
+      },
+      "tint": {
+        "black": "Negro",
+        "cocoa": "Cacao",
+        "rust": "Óxido",
+        "moss": "Musgo",
+        "bronze": "Bronce",
+        "slate": "Pizarra"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transcribiendo...",
     "processing": "Procesando...",
-    "loadingModel": "Cargando modelo..."
+    "loadingModel": "Cargando modelo...",
+    "chip": {
+      "editing": "Editando"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} puede estar bloqueando 1 atajo",

@@ -198,20 +198,34 @@ const capitalizeKey = (key: string): string => {
  * Handles _left/_right suffixes and capitalizes names.
  * e.g. "shift_left" -> "Left Shift", "option" -> "Option", "space" -> "Space"
  */
-const formatKeyPart = (part: string): string => {
+const formatKeyPart = (part: string, osType: OSType): string => {
   const trimmed = part.trim();
   if (!trimmed) return "";
 
   if (trimmed.endsWith("_left")) {
     const name = trimmed.slice(0, -5);
-    return `Left ${capitalizeKey(name)}`;
+    return `Left ${modifierWord(name, osType)}`;
   }
   if (trimmed.endsWith("_right")) {
     const name = trimmed.slice(0, -6);
-    return `Right ${capitalizeKey(name)}`;
+    return `Right ${modifierWord(name, osType)}`;
   }
 
-  return capitalizeKey(trimmed);
+  return modifierWord(trimmed, osType);
+};
+
+/** A key's name as this system prints it: Option/Command on a Mac,
+ * Alt/Win on Windows, Alt/Super on Linux. */
+const modifierWord = (key: string, osType: OSType): string => {
+  const k = key.toLowerCase();
+  if (osType === "macos") {
+    if (k === "alt") return "Option";
+    if (["meta", "super", "win", "windows", "cmd"].includes(k)) return "Command";
+  } else if (osType === "windows" || osType === "linux") {
+    const pc = pcKeycaps(osType);
+    if (pc[k] && k !== "ctrl" && k !== "control" && k !== "shift") return pc[k];
+  }
+  return capitalizeKey(key);
 };
 
 /**
@@ -221,10 +235,13 @@ const formatKeyPart = (part: string): string => {
  */
 export const formatKeyCombination = (
   combination: string,
-  _osType: OSType,
+  osType: OSType,
 ): string => {
   if (!combination) return "";
-  return combination.split("+").map(formatKeyPart).join(" + ");
+  return combination
+    .split("+")
+    .map((part) => formatKeyPart(part, osType))
+    .join(" + ");
 };
 
 /**
@@ -278,15 +295,23 @@ const MAC_KEYCAPS: Record<string, string> = {
   control: "⌃",
   shift: "⇧",
 };
-const PC_KEYCAPS: Record<string, string> = {
-  alt: "Alt",
-  option: "Alt",
-  ctrl: "Ctrl",
-  control: "Ctrl",
-  shift: "Shift",
-  meta: "⊞",
-  super: "⊞",
-  command: "⊞",
+// The Windows key is printed "Win" (its logo glyph is missing from many
+// fonts); Linux calls the same key Super.
+const pcKeycaps = (osType: OSType): Record<string, string> => {
+  const logo = osType === "windows" ? "Win" : "Super";
+  return {
+    alt: "Alt",
+    option: "Alt",
+    ctrl: "Ctrl",
+    control: "Ctrl",
+    shift: "Shift",
+    meta: logo,
+    super: logo,
+    command: logo,
+    cmd: logo,
+    win: logo,
+    windows: logo,
+  };
 };
 
 /** "option+space" → ["⌥", "Space"] on macOS. */
@@ -297,7 +322,7 @@ export const keycapLabels = (binding: string, osType: OSType): string[] =>
     .filter(Boolean)
     .map((part) => {
       const key = part.replace(/_(left|right)$/, "");
-      const glyphs = osType === "macos" ? MAC_KEYCAPS : PC_KEYCAPS;
+      const glyphs = osType === "macos" ? MAC_KEYCAPS : pcKeycaps(osType);
       return glyphs[key] ?? capitalizeKey(key);
     });
 

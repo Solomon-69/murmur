@@ -853,7 +853,7 @@
         "title": "Klavye Tanılaması",
         "description": "Klavye olaylarının murmur'ye ulaşıp ulaşmadığını denetler. Yalnızca olay sayıları kaydedilir — hangi tuşlara bastığınız asla kaydedilmez.",
         "run": "10 sn'lik tanılamayı çalıştır",
-        "running": "Dinleniyor… kısayolunuza birkaç kez basın (ör. Control+Shift+Space)",
+        "running": "Dinleniyor… kısayolunuza birkaç kez basın (ör. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "etkin",
         "disabled": "devre dışı",
@@ -901,6 +901,57 @@
           "description": "Cihaz üzerinde makine öğrenmesi çıkarımı için yüksek performanslı tensör kütüphanesi",
           "details": "murmur'nin yerel konuşmadan metne dönüştürme özelliği transcribe.cpp ve ggml üzerine kuruludur. Georgi Gerganov'a ve katkıda bulunanlara harika çalışmaları için teşekkür ederiz."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karamel",
+        "umber": "Umbra",
+        "sienna": "Siena",
+        "mauve": "Mürdüm",
+        "peach": "Şeftali",
+        "default": "Gri",
+        "terracotta": "Terrakota",
+        "olive": "Zeytin",
+        "ochre": "Aşı boyası",
+        "clay": "Kil",
+        "moss": "Yosun",
+        "sand": "Kum",
+        "electric": "Elektrik",
+        "coral": "Mercan",
+        "violet": "Menekşe",
+        "tangerine": "Mandalina",
+        "magenta": "Macenta",
+        "aqua": "Su yeşili",
+        "sage": "Adaçayı",
+        "rose": "Gül",
+        "slate": "Arduvaz",
+        "lilac": "Leylak",
+        "mushroom": "Mantar",
+        "fogteal": "Sisli turkuaz",
+        "groups": {
+          "neutral": "Nötr",
+          "earth": "Toprak",
+          "vibey": "Canlı",
+          "muted": "Yumuşak"
+        },
+        "more": "Daha fazla renk"
+      },
+      "clearTint": {
+        "clear": "Şeffaf",
+        "sand": "Kum",
+        "clay": "Kil",
+        "sage": "Adaçayı",
+        "ochre": "Okra",
+        "slate": "Arduvaz"
+      },
+      "tint": {
+        "black": "Siyah",
+        "cocoa": "Kakao",
+        "rust": "Pas",
+        "moss": "Yosun",
+        "bronze": "Bronz",
+        "slate": "Arduvaz"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transkribe ediliyor...",
     "processing": "İşleniyor...",
-    "loadingModel": "Model yükleniyor..."
+    "loadingModel": "Model yükleniyor...",
+    "chip": {
+      "editing": "Düzenleniyor"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 1 kısayolu engelliyor olabilir",

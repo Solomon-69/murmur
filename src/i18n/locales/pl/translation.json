@@ -853,7 +853,7 @@
         "title": "Diagnostyka klawiatury",
         "description": "Sprawdza, czy zdarzenia klawiatury docierają do murmur. Zapisywana jest tylko liczba zdarzeń — nigdy to, które klawisze naciskasz.",
         "run": "Uruchom 10-sekundową diagnostykę",
-        "running": "Nasłuchiwanie… naciśnij swój skrót kilka razy (np. Control+Shift+Space)",
+        "running": "Nasłuchiwanie… naciśnij swój skrót kilka razy (np. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "włączony",
         "disabled": "wyłączony",
@@ -901,6 +901,57 @@
           "description": "Wydajne wykonywanie modelu rozpoznawania mowy Whisper od OpenAI",
           "details": "murmur używa ggml do szybkiego, lokalnego przetwarzania mowy na tekst. Dzięki niesamowitej pracy Georgi Gerganova i współtwórców."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karmel",
+        "umber": "Umbra",
+        "sienna": "Sjena",
+        "mauve": "Malwowy",
+        "peach": "Brzoskwinia",
+        "default": "Szary",
+        "terracotta": "Terakota",
+        "olive": "Oliwkowy",
+        "ochre": "Ochra",
+        "clay": "Glina",
+        "moss": "Mech",
+        "sand": "Piasek",
+        "electric": "Elektryczny",
+        "coral": "Koralowy",
+        "violet": "Fioletowy",
+        "tangerine": "Mandarynkowy",
+        "magenta": "Magenta",
+        "aqua": "Akwa",
+        "sage": "Szałwia",
+        "rose": "Różowy",
+        "slate": "Łupek",
+        "lilac": "Liliowy",
+        "mushroom": "Grzybowy",
+        "fogteal": "Mglisty morski",
+        "groups": {
+          "neutral": "Neutralne",
+          "earth": "Ziemiste",
+          "vibey": "Żywe",
+          "muted": "Stonowane"
+        },
+        "more": "Więcej kolorów"
+      },
+      "clearTint": {
+        "clear": "Przezroczyste",
+        "sand": "Piasek",
+        "clay": "Glina",
+        "sage": "Szałwia",
+        "ochre": "Ochra",
+        "slate": "Łupek"
+      },
+      "tint": {
+        "black": "Czarny",
+        "cocoa": "Kakao",
+        "rust": "Rdza",
+        "moss": "Mech",
+        "bronze": "Brąz",
+        "slate": "Łupek"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transkrypcja...",
     "processing": "Przetwarzanie...",
-    "loadingModel": "Wczytywanie modelu..."
+    "loadingModel": "Wczytywanie modelu...",
+    "chip": {
+      "editing": "Edytowanie"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} może blokować 1 skrót",

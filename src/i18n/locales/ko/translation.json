@@ -853,7 +853,7 @@
         "title": "키보드 진단",
         "description": "키보드 이벤트가 murmur에 도달하는지 확인합니다. 이벤트 개수만 기록되며, 어떤 키를 눌렀는지는 절대 기록되지 않습니다.",
         "run": "10초 진단 실행",
-        "running": "수신 중… 단축키를 몇 번 눌러 보세요 (예: Control+Shift+Space)",
+        "running": "수신 중… 단축키를 몇 번 눌러 보세요 (예: Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "사용 중",
         "disabled": "사용 안 함",
@@ -901,6 +901,57 @@
           "description": "OpenAI의 Whisper 자동 음성 인식 모델의 고성능 추론",
           "details": "murmur는 빠르고 로컬 음성-텍스트 처리를 위해 ggml를 사용합니다. Georgi Gerganov와 기여자들의 놀라운 작업에 감사드립니다."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "캐러멜",
+        "umber": "엄버",
+        "sienna": "시에나",
+        "mauve": "모브",
+        "peach": "피치",
+        "default": "회색",
+        "terracotta": "테라코타",
+        "olive": "올리브",
+        "ochre": "오커",
+        "clay": "클레이",
+        "moss": "모스",
+        "sand": "샌드",
+        "electric": "일렉트릭",
+        "coral": "코럴",
+        "violet": "바이올렛",
+        "tangerine": "탠저린",
+        "magenta": "마젠타",
+        "aqua": "아쿠아",
+        "sage": "세이지",
+        "rose": "로즈",
+        "slate": "슬레이트",
+        "lilac": "라일락",
+        "mushroom": "머시룸",
+        "fogteal": "포그 틸",
+        "groups": {
+          "neutral": "뉴트럴",
+          "earth": "어스",
+          "vibey": "비비드",
+          "muted": "뮤트"
+        },
+        "more": "더 많은 색상"
+      },
+      "clearTint": {
+        "clear": "투명",
+        "sand": "샌드",
+        "clay": "클레이",
+        "sage": "세이지",
+        "ochre": "오커",
+        "slate": "슬레이트"
+      },
+      "tint": {
+        "black": "블랙",
+        "cocoa": "코코아",
+        "rust": "러스트",
+        "moss": "모스",
+        "bronze": "브론즈",
+        "slate": "슬레이트"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "텍스트로 변환 중...",
     "processing": "처리 중...",
-    "loadingModel": "모델 로딩 중..."
+    "loadingModel": "모델 로딩 중...",
+    "chip": {
+      "editing": "편집 중"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}}이(가) 단축키 1개를 차단하고 있을 수 있습니다",

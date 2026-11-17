@@ -853,7 +853,7 @@
         "title": "Diagnostik Keyboard",
         "description": "Memeriksa apakah peristiwa keyboard mencapai murmur. Hanya jumlah peristiwa yang dicatat — bukan tombol yang Anda tekan.",
         "run": "Jalankan diagnostik 10 dtk",
-        "running": "Mendengarkan… tekan pintasan Anda beberapa kali (mis. Control+Shift+Space)",
+        "running": "Mendengarkan… tekan pintasan Anda beberapa kali (mis. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "aktif",
         "disabled": "nonaktif",
@@ -901,6 +901,57 @@
           "description": "Pustaka tensor berkinerja tinggi untuk inferensi pembelajaran mesin di perangkat",
           "details": "Fitur ucapan-ke-teks lokal murmur dibangun menggunakan transcribe.cpp dan ggml. Terima kasih kepada Georgi Gerganov dan para kontributor atas karya luar biasa mereka."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karamel",
+        "umber": "Umber",
+        "sienna": "Siena",
+        "mauve": "Mauve",
+        "peach": "Persik",
+        "default": "Abu-abu",
+        "terracotta": "Terakota",
+        "olive": "Zaitun",
+        "ochre": "Oker",
+        "clay": "Tanah liat",
+        "moss": "Lumut",
+        "sand": "Pasir",
+        "electric": "Elektrik",
+        "coral": "Koral",
+        "violet": "Ungu",
+        "tangerine": "Jeruk",
+        "magenta": "Magenta",
+        "aqua": "Aqua",
+        "sage": "Sage",
+        "rose": "Merah muda",
+        "slate": "Batu tulis",
+        "lilac": "Lila",
+        "mushroom": "Jamur",
+        "fogteal": "Hijau kabut",
+        "groups": {
+          "neutral": "Netral",
+          "earth": "Tanah",
+          "vibey": "Cerah",
+          "muted": "Lembut"
+        },
+        "more": "Warna lain"
+      },
+      "clearTint": {
+        "clear": "Bening",
+        "sand": "Pasir",
+        "clay": "Tanah liat",
+        "sage": "Sage",
+        "ochre": "Oker",
+        "slate": "Batu tulis"
+      },
+      "tint": {
+        "black": "Hitam",
+        "cocoa": "Kakao",
+        "rust": "Karat",
+        "moss": "Lumut",
+        "bronze": "Perunggu",
+        "slate": "Batu tulis"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Mentranskripsikan...",
     "processing": "Memproses...",
-    "loadingModel": "Memuat model..."
+    "loadingModel": "Memuat model...",
+    "chip": {
+      "editing": "Mengedit"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} mungkin memblokir 1 pintasan",

@@ -853,7 +853,7 @@
         "title": "Chẩn đoán bàn phím",
         "description": "Kiểm tra xem các sự kiện bàn phím có đến được murmur hay không. Chỉ số lượng sự kiện được ghi lại — không bao giờ ghi lại bạn bấm phím nào.",
         "run": "Chạy chẩn đoán 10 giây",
-        "running": "Đang lắng nghe… hãy bấm phím tắt của bạn vài lần (ví dụ: Control+Shift+Space)",
+        "running": "Đang lắng nghe… hãy bấm phím tắt của bạn vài lần (ví dụ: Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "đang bật",
         "disabled": "đang tắt",
@@ -901,6 +901,57 @@
           "description": "Suy luận hiệu suất cao của mô hình nhận dạng giọng nói tự động Whisper của OpenAI",
           "details": "murmur sử dụng ggml để xử lý chuyển đổi giọng nói thành văn bản nhanh, cục bộ. Cảm ơn công việc tuyệt vời của Georgi Gerganov và các cộng tác viên."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Caramel",
+        "umber": "Nâu đất",
+        "sienna": "Sienna",
+        "mauve": "Tím nhạt",
+        "peach": "Đào",
+        "default": "Xám",
+        "terracotta": "Đất nung",
+        "olive": "Ô liu",
+        "ochre": "Đất son",
+        "clay": "Đất sét",
+        "moss": "Rêu",
+        "sand": "Cát",
+        "electric": "Điện",
+        "coral": "San hô",
+        "violet": "Tím",
+        "tangerine": "Quýt",
+        "magenta": "Hồng sẫm",
+        "aqua": "Nước biển",
+        "sage": "Xô thơm",
+        "rose": "Hồng",
+        "slate": "Đá phiến",
+        "lilac": "Tử đinh hương",
+        "mushroom": "Nấm",
+        "fogteal": "Xanh sương mù",
+        "groups": {
+          "neutral": "Trung tính",
+          "earth": "Đất",
+          "vibey": "Rực rỡ",
+          "muted": "Dịu"
+        },
+        "more": "Thêm màu"
+      },
+      "clearTint": {
+        "clear": "Trong suốt",
+        "sand": "Cát",
+        "clay": "Đất sét",
+        "sage": "Xô thơm",
+        "ochre": "Đất son",
+        "slate": "Đá phiến"
+      },
+      "tint": {
+        "black": "Đen",
+        "cocoa": "Ca cao",
+        "rust": "Gỉ sét",
+        "moss": "Rêu",
+        "bronze": "Đồng",
+        "slate": "Đá phiến"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Đang chuyển đổi...",
     "processing": "Đang xử lý...",
-    "loadingModel": "Đang tải mô hình..."
+    "loadingModel": "Đang tải mô hình...",
+    "chip": {
+      "editing": "Đang chỉnh sửa"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} có thể đang chặn 1 phím tắt",

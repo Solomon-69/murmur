@@ -6,8 +6,9 @@ const HAIRLINE =
   "inset 0 0 0 1px color-mix(in srgb, var(--color-text) 18%, transparent)";
 /** White ring touching the circle; App.css adds a faint outer line in light theme. */
 const RING = "var(--swatch-ring)";
-/** Black ring touching the circle, for the pale clear-glass colours. */
-const RING_DARK = "0 0 0 2px #0b0b0c";
+/** Two-tone ring touching the circle: dark inside, light outside, so the
+ *  chosen colour shows on both the light and the dark app appearance. */
+const RING_DARK = "0 0 0 2px #1c1c1e, 0 0 0 4px #f2f2f4";
 const GLIDE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 interface ColorSwatchProps
@@ -15,7 +16,7 @@ interface ColorSwatchProps
   /** CSS background (flat colour, or the hard-edged wheel). */
   fill: string;
   selected: boolean;
-  /** "dark" puts a black ring on the chosen circle (easier to see on pale colours). */
+  /** "dark" puts the two-tone ring on the chosen circle (glass colour rows). */
   ring?: "light" | "dark";
 }
 
@@ -53,21 +54,21 @@ ColorSwatch.displayName = "ColorSwatch";
 
 /** Swatch preview colours for the clear glass row (not what the bar renders). */
 export const CLEAR_SWATCH_COLORS: Record<string, string> = {
-  clear: "#d9d9dc",
-  frost: "#f4f4f2",
-  sand: "#e6d5b8",
-  rose: "#e8c6c8",
-  sage: "#c8dbc4",
-  sky: "#c6d6ee",
+  clear: "#c4c5ca",
+  sand: "#d6ba8c",
+  clay: "#c47a5c",
+  sage: "#8aa078",
+  ochre: "#cc983c",
+  slate: "#708aa6",
 };
 
 /** Swatch preview colours for the black glass row (not what the bar renders).
  *  One solid colour each, lifted a little so the dark tints are easy to tell apart. */
 export const BLACK_SWATCH_COLORS: Record<string, string> = {
-  black: "#111113",
-  graphite: "#53545c",
-  navy: "#30448a",
-  plum: "#6e3a76",
-  forest: "#356645",
-  cocoa: "#77502f",
+  black: "#18181a",
+  cocoa: "#5e3d27",
+  rust: "#7c3520",
+  moss: "#3e5a35",
+  bronze: "#76591f",
+  slate: "#34496a",
 };

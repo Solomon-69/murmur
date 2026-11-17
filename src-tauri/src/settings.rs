@@ -685,12 +685,16 @@ pub struct AppSettings {
     /// (black glass with white waveform and controls).
     #[serde(default = "default_overlay_glass")]
     pub overlay_glass: String,
-    /// Colour of the black glass: "black", "graphite", "navy", "plum",
-    /// "forest" or "cocoa". Fixed, so it never picks up what is behind it.
-    #[serde(default = "default_overlay_glass_tint")]
+    /// Colour of the black glass: "black", "cocoa", "rust", "moss",
+    /// "bronze" or "slate" (dark earthy tones). Fixed, so it never picks up
+    /// what is behind it.
+    #[serde(
+        default = "default_overlay_glass_tint",
+        deserialize_with = "deserialize_overlay_glass_tint"
+    )]
     pub overlay_glass_tint: String,
-    /// Colour of the clear glass: "clear", "frost", "sand", "rose", "sage"
-    /// or "sky". Light tints laid over the see-through bar.
+    /// Colour of the clear glass: "clear", "sand", "clay", "sage", "ochre"
+    /// or "slate". Earthy tints laid over the see-through bar.
     #[serde(
         default = "default_overlay_clear_tint",
         deserialize_with = "deserialize_overlay_clear_tint"
@@ -735,7 +739,7 @@ fn default_voice_corrections_enabled() -> bool {
 }
 
 /// Accent swatch ids the recording bar understands (see RecordingOverlay.css).
-pub const OVERLAY_ACCENTS: [&str; 19] = [
+pub const OVERLAY_ACCENTS: [&str; 24] = [
     "default",
     // Earth
     "terracotta",
@@ -744,6 +748,9 @@ pub const OVERLAY_ACCENTS: [&str; 19] = [
     "clay",
     "moss",
     "sand",
+    "caramel",
+    "umber",
+    "sienna",
     // Vibey
     "electric",
     "coral",
@@ -758,6 +765,8 @@ pub const OVERLAY_ACCENTS: [&str; 19] = [
     "lilac",
     "mushroom",
     "fogteal",
+    "mauve",
+    "peach",
 ];
 
 /// Maps a stored accent id to a known one. Retired ids (pink, green, orange,
@@ -806,22 +815,59 @@ where
 
 /// Bar glass looks the recording bar understands (see RecordingOverlay.css).
 pub const OVERLAY_GLASSES: [&str; 2] = ["clear", "black"];
-pub const OVERLAY_GLASS_TINTS: [&str; 6] = ["black", "graphite", "navy", "plum", "forest", "cocoa"];
+pub const OVERLAY_GLASS_TINTS: [&str; 6] = ["black", "cocoa", "rust", "moss", "bronze", "slate"];
 /// Clear glass tints (see data-ctint in RecordingOverlay.css).
-pub const OVERLAY_CLEAR_TINTS: [&str; 6] = ["clear", "frost", "sand", "rose", "sage", "sky"];
+pub const OVERLAY_CLEAR_TINTS: [&str; 6] = ["clear", "sand", "clay", "sage", "ochre", "slate"];
 
-/// Unknown clear tints (or non-strings) fall back to plain "clear".
+/// The nearest current black glass tint for a stored id (older builds had
+/// graphite, navy, plum and forest). Unknown ids become plain "black".
+pub fn normalize_overlay_glass_tint(id: &str) -> String {
+    let id = match id {
+        "graphite" => "black",
+        "navy" => "slate",
+        "plum" => "rust",
+        "forest" => "moss",
+        other => other,
+    };
+    if OVERLAY_GLASS_TINTS.contains(&id) {
+        id.to_string()
+    } else {
+        default_overlay_glass_tint()
+    }
+}
+
+/// The nearest current clear glass tint for a stored id (older builds had
+/// frost, rose and sky). Unknown ids become plain "clear".
+pub fn normalize_overlay_clear_tint(id: &str) -> String {
+    let id = match id {
+        "frost" => "clear",
+        "rose" => "clay",
+        "sky" => "slate",
+        other => other,
+    };
+    if OVERLAY_CLEAR_TINTS.contains(&id) {
+        id.to_string()
+    } else {
+        default_overlay_clear_tint()
+    }
+}
+
+/// Old or unknown black glass tints (or non-strings) map to a current one.
+fn deserialize_overlay_glass_tint<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    Ok(normalize_overlay_glass_tint(value.as_str().unwrap_or("")))
+}
+
+/// Old or unknown clear tints (or non-strings) map to a current one.
 fn deserialize_overlay_clear_tint<'de, D>(deserializer: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,
 {
     let value = serde_json::Value::deserialize(deserializer)?;
-    let id = value.as_str().unwrap_or("");
-    Ok(if OVERLAY_CLEAR_TINTS.contains(&id) {
-        id.to_string()
-    } else {
-        default_overlay_clear_tint()
-    })
+    Ok(normalize_overlay_clear_tint(value.as_str().unwrap_or("")))
 }
 
 /// Applies one Appearance / prompt-chip setting from its string form, with
@@ -947,8 +993,32 @@ mod appearance_tests {
             serde_json::from_value(serde_json::json!({ "overlay_clear_tint": "neon" })).unwrap();
         assert_eq!(t.overlay_clear_tint, "clear");
         let t: AppSettings =
-            serde_json::from_value(serde_json::json!({ "overlay_clear_tint": "rose" })).unwrap();
-        assert_eq!(t.overlay_clear_tint, "rose");
+            serde_json::from_value(serde_json::json!({ "overlay_clear_tint": "sage" })).unwrap();
+        assert_eq!(t.overlay_clear_tint, "sage");
+    }
+
+    #[test]
+    fn old_glass_tints_move_to_the_nearest_earthy_one() {
+        for (old, new) in [("frost", "clear"), ("rose", "clay"), ("sky", "slate"), ("sand", "sand")] {
+            let t: AppSettings =
+                serde_json::from_value(serde_json::json!({ "overlay_clear_tint": old })).unwrap();
+            assert_eq!(t.overlay_clear_tint, new, "{old}");
+        }
+        for (old, new) in [
+            ("graphite", "black"),
+            ("navy", "slate"),
+            ("plum", "rust"),
+            ("forest", "moss"),
+            ("cocoa", "cocoa"),
+            ("neon", "black"),
+        ] {
+            let t: AppSettings =
+                serde_json::from_value(serde_json::json!({ "overlay_glass_tint": old })).unwrap();
+            assert_eq!(t.overlay_glass_tint, new, "{old}");
+        }
+        let t: AppSettings =
+            serde_json::from_value(serde_json::json!({ "overlay_glass_tint": 3 })).unwrap();
+        assert_eq!(t.overlay_glass_tint, "black");
     }
 
     #[test]
@@ -979,6 +1049,7 @@ mod appearance_tests {
         assert!(apply_appearance_setting(&mut s, "overlay_opacity", "NaN").is_err());
         assert!(apply_appearance_setting(&mut s, "overlay_size", "huge").is_err());
         assert!(apply_appearance_setting(&mut s, "overlay_clear_tint", "navy").is_err());
+        assert!(apply_appearance_setting(&mut s, "overlay_glass_tint", "graphite").is_err());
         assert!(apply_appearance_setting(&mut s, "nope", "1").is_err());
         assert_eq!(s.overlay_accent, before.overlay_accent);
         assert_eq!(s.overlay_opacity, before.overlay_opacity);
@@ -1069,29 +1140,65 @@ fn default_model() -> String {
     "".to_string()
 }
 
-const CURRENT_SETTINGS_SCHEMA_VERSION: u32 = 4;
+const CURRENT_SETTINGS_SCHEMA_VERSION: u32 = 6;
 
-/// Default Mac transcribe shortcut since schema 4.
+/// Default Mac transcribe shortcut (again since schema 5): Option+Space.
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
-const MAC_TRANSCRIBE_SHORTCUT: &str = "ctrl+shift+space";
-/// Mac transcribe defaults before schema 4 ("alt" is the same key as "option").
+const MAC_TRANSCRIBE_SHORTCUT: &str = "option+space";
+/// The schema 4 default, Control+Shift+Space, which schema 5 moves back.
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
-const LEGACY_MAC_TRANSCRIBE_SHORTCUTS: &[&str] = &["option+space", "alt+space"];
+const SCHEMA_4_MAC_TRANSCRIBE_SHORTCUT: &str = "ctrl+shift+space";
 
-/// Moves a Mac transcribe binding still on the old Option+Space default to
-/// the new default. Returns true when it changed something.
+/// Moves a Mac transcribe binding still on the schema 4 default
+/// (Control+Shift+Space) back to Option+Space. A shortcut the person picked
+/// is kept. Returns true when it changed something.
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn migrate_mac_transcribe_shortcut(settings: &mut AppSettings) -> bool {
     let Some(binding) = settings.bindings.get_mut("transcribe") else {
         return false;
     };
-    let current = binding.current_binding.to_lowercase();
-    if !LEGACY_MAC_TRANSCRIBE_SHORTCUTS.contains(&current.as_str()) {
+    let current = binding.current_binding.to_lowercase().replace("control", "ctrl");
+    if current != SCHEMA_4_MAC_TRANSCRIBE_SHORTCUT {
         return false;
     }
     binding.current_binding = MAC_TRANSCRIBE_SHORTCUT.to_string();
     binding.default_binding = MAC_TRANSCRIBE_SHORTCUT.to_string();
     true
+}
+
+/// Windows defaults since schema 6. Ctrl+Space (the old default) switches the
+/// Chinese, Japanese and Korean input methods on and off and opens
+/// suggestions in code editors; Ctrl+Shift+Space types a non-breaking space
+/// in Office. Ctrl+Alt+Space is not used by Windows itself.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+const WINDOWS_TRANSCRIBE_SHORTCUT: &str = "ctrl+alt+space";
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+const WINDOWS_POST_PROCESS_SHORTCUT: &str = "ctrl+alt+shift+space";
+/// The Windows defaults before schema 6, as (binding id, old, new).
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+const OLD_WINDOWS_DEFAULTS: [(&str, &str, &str); 2] = [
+    ("transcribe", "ctrl+space", WINDOWS_TRANSCRIBE_SHORTCUT),
+    ("transcribe_with_post_process", "ctrl+shift+space", WINDOWS_POST_PROCESS_SHORTCUT),
+];
+
+/// Moves Windows bindings still on the old clashing defaults to the new
+/// ones. A shortcut the person picked is kept. Returns true when it changed
+/// something.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+fn migrate_windows_shortcuts(settings: &mut AppSettings) -> bool {
+    let mut changed = false;
+    for (id, old, new) in OLD_WINDOWS_DEFAULTS {
+        let Some(binding) = settings.bindings.get_mut(id) else {
+            continue;
+        };
+        let current = binding.current_binding.to_lowercase().replace("control", "ctrl");
+        if current == old {
+            binding.current_binding = new.to_string();
+            binding.default_binding = new.to_string();
+            changed = true;
+        }
+    }
+    changed
 }
 
 fn default_settings_schema_version() -> u32 {
@@ -1472,9 +1579,9 @@ pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 
 pub fn get_default_settings() -> AppSettings {
     #[cfg(target_os = "windows")]
-    let default_shortcut = "ctrl+space";
-    // Option+Space clashed with Claude's own shortcut, so the Mac default is
-    // Control+Shift+Space (old stores move over in apply_settings_migrations).
+    let default_shortcut = WINDOWS_TRANSCRIBE_SHORTCUT;
+    // Option+Space (stores left on the short-lived Control+Shift+Space
+    // default move back in apply_settings_migrations).
     #[cfg(target_os = "macos")]
     let default_shortcut = MAC_TRANSCRIBE_SHORTCUT;
     #[cfg(target_os = "linux")]
@@ -1494,7 +1601,7 @@ pub fn get_default_settings() -> AppSettings {
         },
     );
     #[cfg(target_os = "windows")]
-    let default_post_process_shortcut = "ctrl+shift+space";
+    let default_post_process_shortcut = WINDOWS_POST_PROCESS_SHORTCUT;
     #[cfg(target_os = "macos")]
     let default_post_process_shortcut = "option+shift+space";
     #[cfg(target_os = "linux")]
@@ -1898,12 +2005,23 @@ fn apply_settings_migrations(
         settings.settings_schema_version = CURRENT_SETTINGS_SCHEMA_VERSION;
         updated = true;
     }
-    if stored_schema_version < 4 {
-        // The Mac transcribe default moved from Option+Space (clashed with
-        // Claude) to Control+Shift+Space. Move stores still on the old one,
-        // once; a shortcut the person picked themselves is kept.
+    if stored_schema_version < 5 {
+        // Schema 4 moved the Mac transcribe default to Control+Shift+Space;
+        // schema 5 makes Option+Space the default again. Stores still on
+        // Control+Shift+Space move back once; Option+Space stores (older
+        // than 4) simply stay; a shortcut the person picked is kept.
         #[cfg(target_os = "macos")]
         migrate_mac_transcribe_shortcut(settings);
+        // The bar opacity option was removed; the bar is always opaque glass.
+        settings.overlay_opacity = default_overlay_opacity();
+        settings.settings_schema_version = CURRENT_SETTINGS_SCHEMA_VERSION;
+        updated = true;
+    }
+    if stored_schema_version < 6 {
+        // Schema 6: Windows defaults no longer clash with input methods,
+        // editors and Office (Ctrl+Space, Ctrl+Shift+Space).
+        #[cfg(target_os = "windows")]
+        migrate_windows_shortcuts(settings);
         settings.settings_schema_version = CURRENT_SETTINGS_SCHEMA_VERSION;
         updated = true;
     }
@@ -2245,6 +2363,17 @@ mod tests {
         assert_eq!(salvaged.custom_words, vec!["murmur".to_string()]);
     }
 
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn windows_default_shortcuts_do_not_clash_with_input_methods() {
+        let defaults = get_default_settings();
+        assert_eq!(defaults.bindings["transcribe"].current_binding, "ctrl+alt+space");
+        assert_eq!(
+            defaults.bindings["transcribe_with_post_process"].current_binding,
+            "ctrl+alt+shift+space",
+        );
+    }
+
     #[cfg(target_os = "linux")]
     #[test]
     fn default_shortcuts_do_not_conflict_with_ibus_input_method_switch() {
@@ -2542,81 +2671,82 @@ mod tests {
     }
 
     #[test]
-    fn mac_transcribe_shortcut_moves_off_option_space_once() {
+    fn mac_transcribe_shortcut_moves_back_to_option_space_once() {
         let mut settings = get_default_settings();
-        for old in ["option+space", "alt+space", "Option+Space"] {
+        for old in ["ctrl+shift+space", "Ctrl+Shift+Space", "control+shift+space"] {
             let b = settings.bindings.get_mut("transcribe").unwrap();
             b.current_binding = old.to_string();
-            b.default_binding = "option+space".to_string();
+            b.default_binding = "ctrl+shift+space".to_string();
             assert!(migrate_mac_transcribe_shortcut(&mut settings), "{old}");
-            assert_eq!(
-                settings.bindings["transcribe"].current_binding,
-                "ctrl+shift+space"
-            );
-            assert_eq!(
-                settings.bindings["transcribe"].default_binding,
-                "ctrl+shift+space"
-            );
+            assert_eq!(settings.bindings["transcribe"].current_binding, "option+space");
+            assert_eq!(settings.bindings["transcribe"].default_binding, "option+space");
         }
         // A shortcut the person chose is kept.
-        settings
-            .bindings
-            .get_mut("transcribe")
-            .unwrap()
-            .current_binding = "f13".to_string();
-        assert!(!migrate_mac_transcribe_shortcut(&mut settings));
-        assert_eq!(settings.bindings["transcribe"].current_binding, "f13");
+        for own in ["f13", "option+space", "ctrl+alt+space"] {
+            settings.bindings.get_mut("transcribe").unwrap().current_binding = own.to_string();
+            assert!(!migrate_mac_transcribe_shortcut(&mut settings), "{own}");
+            assert_eq!(settings.bindings["transcribe"].current_binding, own);
+        }
     }
 
     #[cfg(target_os = "macos")]
     #[test]
-    fn mac_default_transcribe_shortcut_is_ctrl_shift_space() {
+    fn mac_default_transcribe_shortcut_is_option_space() {
         let defaults = get_default_settings();
-        assert_eq!(
-            defaults.bindings["transcribe"].current_binding,
-            "ctrl+shift+space"
-        );
-        assert_eq!(
-            defaults.bindings["transcribe"].default_binding,
-            "ctrl+shift+space"
-        );
-        let others: Vec<&str> = defaults
+        assert_eq!(defaults.bindings["transcribe"].current_binding, "option+space");
+        assert_eq!(defaults.bindings["transcribe"].default_binding, "option+space");
+        let others: Vec<String> = defaults
             .bindings
             .iter()
             .filter(|(id, _)| id.as_str() != "transcribe")
-            .map(|(_, b)| b.current_binding.as_str())
+            .map(|(_, b)| b.current_binding.to_lowercase())
             .collect();
-        assert!(
-            !others.contains(&"ctrl+shift+space"),
-            "clashes with another default"
-        );
+        for same in ["option+space", "alt+space"] {
+            assert!(!others.iter().any(|o| o == same), "clashes with another default");
+        }
     }
 
     #[cfg(target_os = "macos")]
     #[test]
-    fn schema_3_store_on_option_space_migrates_through_apply() {
+    fn schema_4_store_on_ctrl_shift_space_migrates_through_apply() {
         let mut stored = serde_json::to_value(get_default_settings()).unwrap();
+        stored["settings_schema_version"] = serde_json::json!(4);
+        stored["bindings"]["transcribe"]["current_binding"] = serde_json::json!("ctrl+shift+space");
+        let mut settings: AppSettings = serde_json::from_value(stored.clone()).unwrap();
+        assert!(apply_settings_migrations(&mut settings, &stored));
+        assert_eq!(settings.bindings["transcribe"].current_binding, "option+space");
+        assert_eq!(settings.settings_schema_version, CURRENT_SETTINGS_SCHEMA_VERSION);
+
+        // A schema 3 store on Option+Space keeps it.
         stored["settings_schema_version"] = serde_json::json!(3);
         stored["bindings"]["transcribe"]["current_binding"] = serde_json::json!("option+space");
         let mut settings: AppSettings = serde_json::from_value(stored.clone()).unwrap();
-        assert!(apply_settings_migrations(&mut settings, &stored));
-        assert_eq!(
-            settings.bindings["transcribe"].current_binding,
-            "ctrl+shift+space"
-        );
-        assert_eq!(
-            settings.settings_schema_version,
-            CURRENT_SETTINGS_SCHEMA_VERSION
-        );
+        apply_settings_migrations(&mut settings, &stored);
+        assert_eq!(settings.bindings["transcribe"].current_binding, "option+space");
 
-        // Already on schema 4: picking Option+Space again sticks.
+        // Already on schema 5: picking Control+Shift+Space again sticks.
         stored["settings_schema_version"] = serde_json::json!(CURRENT_SETTINGS_SCHEMA_VERSION);
+        stored["bindings"]["transcribe"]["current_binding"] = serde_json::json!("ctrl+shift+space");
         let mut settings: AppSettings = serde_json::from_value(stored.clone()).unwrap();
         apply_settings_migrations(&mut settings, &stored);
+        assert_eq!(settings.bindings["transcribe"].current_binding, "ctrl+shift+space");
+    }
+
+    #[test]
+    fn old_windows_defaults_move_and_picked_shortcuts_stay() {
+        let mut settings = get_default_settings();
+        for (id, old, _) in OLD_WINDOWS_DEFAULTS {
+            settings.bindings.get_mut(id).unwrap().current_binding = old.to_string();
+        }
+        assert!(migrate_windows_shortcuts(&mut settings));
+        assert_eq!(settings.bindings["transcribe"].current_binding, "ctrl+alt+space");
         assert_eq!(
-            settings.bindings["transcribe"].current_binding,
-            "option+space"
+            settings.bindings["transcribe_with_post_process"].current_binding,
+            "ctrl+alt+shift+space"
         );
+        settings.bindings.get_mut("transcribe").unwrap().current_binding = "f9".to_string();
+        assert!(!migrate_windows_shortcuts(&mut settings));
+        assert_eq!(settings.bindings["transcribe"].current_binding, "f9");
     }
 
     #[test]

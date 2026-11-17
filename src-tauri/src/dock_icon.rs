@@ -30,6 +30,9 @@ pub fn accent_rgb(accent_id: &str) -> Option<[u8; 3]> {
         "clay" => 0x9a5b47,
         "moss" => 0x4f6b4a,
         "sand" => 0xb39567,
+        "caramel" => 0xb5793f,
+        "umber" => 0x6b4f3f,
+        "sienna" => 0xa0522d,
         "electric" => 0x3d5afe,
         "coral" => 0xff5a5f,
         "violet" => 0x7c4dff,
@@ -42,6 +45,8 @@ pub fn accent_rgb(accent_id: &str) -> Option<[u8; 3]> {
         "lilac" => 0x9e95b5,
         "mushroom" => 0xa39587,
         "fogteal" => 0x7fa3a0,
+        "mauve" => 0xa8818c,
+        "peach" => 0xd29b82,
         _ => return None,
     };
     Some([(hex >> 16) as u8, (hex >> 8) as u8, hex as u8])

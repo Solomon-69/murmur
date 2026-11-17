@@ -853,7 +853,7 @@
         "title": "キーボード診断",
         "description": "キーボードイベントが murmur に届いているかを確認します。記録されるのはイベント数のみで、押したキーの内容は記録されません。",
         "run": "10 秒間の診断を実行",
-        "running": "待機中… ショートカットを数回押してください (例: Control+Shift+Space)",
+        "running": "待機中… ショートカットを数回押してください (例: Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "有効",
         "disabled": "無効",
@@ -901,6 +901,57 @@
           "description": "オンデバイス機械学習推論のための高性能テンソルライブラリ",
           "details": "murmur のローカルの音声からテキストへの文字起こしは transcribe.cpp と ggml を基盤としています。Georgi Gerganov 氏と貢献者の皆様の素晴らしい仕事に感謝します。"
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "キャラメル",
+        "umber": "アンバー",
+        "sienna": "シエナ",
+        "mauve": "モーブ",
+        "peach": "ピーチ",
+        "default": "グレー",
+        "terracotta": "テラコッタ",
+        "olive": "オリーブ",
+        "ochre": "オーカー",
+        "clay": "クレイ",
+        "moss": "モス",
+        "sand": "サンド",
+        "electric": "エレクトリック",
+        "coral": "コーラル",
+        "violet": "バイオレット",
+        "tangerine": "タンジェリン",
+        "magenta": "マゼンタ",
+        "aqua": "アクア",
+        "sage": "セージ",
+        "rose": "ローズ",
+        "slate": "スレート",
+        "lilac": "ライラック",
+        "mushroom": "マッシュルーム",
+        "fogteal": "フォグティール",
+        "groups": {
+          "neutral": "ニュートラル",
+          "earth": "アース",
+          "vibey": "ビビッド",
+          "muted": "くすみ"
+        },
+        "more": "その他の色"
+      },
+      "clearTint": {
+        "clear": "クリア",
+        "sand": "サンド",
+        "clay": "クレイ",
+        "sage": "セージ",
+        "ochre": "オーカー",
+        "slate": "スレート"
+      },
+      "tint": {
+        "black": "ブラック",
+        "cocoa": "ココア",
+        "rust": "ラスト",
+        "moss": "モス",
+        "bronze": "ブロンズ",
+        "slate": "スレート"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "文字起こし中…",
     "processing": "処理中…",
-    "loadingModel": "モデルを読み込み中…"
+    "loadingModel": "モデルを読み込み中…",
+    "chip": {
+      "editing": "編集中"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} が1個のショートカットをブロックしている可能性があります",

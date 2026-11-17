@@ -6,25 +6,25 @@ export { ACCENT_COLORS };
 /** Black glass colours (RGB); keep in sync with data-tint in RecordingOverlay.css. */
 export const GLASS_TINTS: Record<string, string> = {
   black: "10, 10, 12",
-  graphite: "38, 40, 46",
-  navy: "14, 24, 52",
-  plum: "40, 18, 46",
-  forest: "14, 38, 30",
-  cocoa: "46, 30, 22",
+  cocoa: "70, 44, 28",
+  rust: "92, 38, 22",
+  moss: "36, 58, 32",
+  bronze: "82, 62, 22",
+  slate: "30, 44, 66",
 };
 
 /** Clear glass tints (RGB, laid over the see-through bar); keep in sync with
  *  data-ctint in RecordingOverlay.css. "clear" has no tint. */
 export const CLEAR_TINTS: Record<string, string | null> = {
   clear: null,
-  frost: "255, 255, 255",
-  sand: "236, 214, 180",
-  rose: "240, 200, 204",
-  sage: "200, 222, 196",
-  sky: "196, 218, 242",
+  sand: "214, 186, 140",
+  clay: "196, 122, 92",
+  sage: "138, 160, 120",
+  ochre: "204, 152, 60",
+  slate: "112, 138, 166",
 };
 /** How strongly a clear tint covers the bar. */
-export const CLEAR_TINT_ALPHA = 0.32;
+export const CLEAR_TINT_ALPHA = 0.5;
 
 /** Background of the clear glass bar for a tint id. */
 export const clearGlassFill = (id: string) => {
@@ -74,9 +74,7 @@ const Pill: React.FC<{
       zoom: scale,
       opacity,
       width: words ? 260 : 150,
-      background: black
-        ? `rgba(${tint}, 0.78)`
-        : clearFill,
+      background: black ? `rgba(${tint}, 0.84)` : clearFill,
       backdropFilter: black ? "blur(22px) saturate(60%)" : "blur(4px)",
       borderColor: black ? "rgba(255, 255, 255, 0.1)" : undefined,
       boxShadow: black ? "inset 0 1px 0 rgba(255, 255, 255, 0.14)" : undefined,

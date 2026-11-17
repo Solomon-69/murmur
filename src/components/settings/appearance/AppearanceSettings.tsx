@@ -37,7 +37,6 @@ export const AppearanceSettings: React.FC = () => {
   const appAccent = appMatchesBar
     ? accent
     : normalizeAccent(settings.app_accent);
-  const opacity = settings.overlay_opacity ?? 1;
   const glass = settings.overlay_glass ?? "clear";
   const tint = settings.overlay_glass_tint ?? "black";
   const clearTint = settings.overlay_clear_tint ?? "clear";
@@ -84,7 +83,7 @@ export const AppearanceSettings: React.FC = () => {
             glass={glass}
             tint={tint}
             clearTint={clearTint}
-            opacity={opacity}
+            opacity={1}
             position={position}
             showsWords={showsWords}
           />
@@ -151,6 +150,7 @@ export const AppearanceSettings: React.FC = () => {
           >
             <TintSwatches
               ids={TINTS}
+              ring="dark"
               value={tint}
               label={t(`${a}.tint.title`)}
               name={(id) => t(`${a}.tint.${id}`)}
@@ -240,37 +240,12 @@ export const AppearanceSettings: React.FC = () => {
           title={t(`${a}.accent.title`)}
           description={t(`${a}.accent.description`)}
           descriptionMode="tooltip"
-          layout="stacked"
           grouped={true}
         >
           <AccentPicker
             value={accent}
             onChange={(id) => updateSetting("overlay_accent", id)}
           />
-        </SettingContainer>
-        <SettingContainer
-          title={t(`${a}.opacity.title`)}
-          description={t(`${a}.opacity.description`)}
-          descriptionMode="tooltip"
-          grouped={true}
-        >
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min={40}
-              max={100}
-              step={5}
-              defaultValue={Math.round(opacity * 100)}
-              aria-label={t(`${a}.opacity.title`)}
-              onChange={(e) =>
-                updateSetting("overlay_opacity", Number(e.target.value) / 100)
-              }
-              className="w-40 accent-logo-primary"
-            />
-            <span className="w-12 text-right text-xs tabular-nums text-ink-2">
-              {Math.round(opacity * 100)}%
-            </span>
-          </div>
         </SettingContainer>
       </SettingsGroup>
     </div>

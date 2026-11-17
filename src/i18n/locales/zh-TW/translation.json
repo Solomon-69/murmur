@@ -853,7 +853,7 @@
         "title": "鍵盤診斷",
         "description": "檢查鍵盤事件是否能送達 murmur。只會記錄事件數量，絕不記錄您按了哪些按鍵。",
         "run": "執行 10 秒診斷",
-        "running": "正在監聽… 請按幾次您的快捷鍵（例如 Control+Shift+Space）",
+        "running": "正在監聽… 請按幾次您的快捷鍵（例如 Option+Space）",
         "secureInputLabel": "Secure Input",
         "enabled": "已啟用",
         "disabled": "已停用",
@@ -901,6 +901,57 @@
           "description": "針對 OpenAI Whisper 自動語音辨識模型的高效能推理引擎",
           "details": "murmur 使用 ggml 進行快速的本機語音轉文字處理。感謝 Georgi Gerganov 和貢獻者們的傑出工作"
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "焦糖",
+        "umber": "熟褐",
+        "sienna": "赭石",
+        "mauve": "藕紫",
+        "peach": "蜜桃",
+        "default": "灰色",
+        "terracotta": "陶土",
+        "olive": "橄欖",
+        "ochre": "赭石",
+        "clay": "黏土",
+        "moss": "苔蘚",
+        "sand": "沙色",
+        "electric": "電光藍",
+        "coral": "珊瑚",
+        "violet": "紫羅蘭",
+        "tangerine": "橘色",
+        "magenta": "洋紅",
+        "aqua": "水藍",
+        "sage": "鼠尾草",
+        "rose": "玫瑰",
+        "slate": "石板",
+        "lilac": "丁香紫",
+        "mushroom": "蘑菇",
+        "fogteal": "霧青",
+        "groups": {
+          "neutral": "中性",
+          "earth": "大地",
+          "vibey": "鮮豔",
+          "muted": "柔和"
+        },
+        "more": "更多顏色"
+      },
+      "clearTint": {
+        "clear": "透明",
+        "sand": "沙色",
+        "clay": "陶土",
+        "sage": "鼠尾草",
+        "ochre": "赭黃",
+        "slate": "石板藍"
+      },
+      "tint": {
+        "black": "黑色",
+        "cocoa": "可可",
+        "rust": "鐵鏽",
+        "moss": "苔綠",
+        "bronze": "青銅",
+        "slate": "石板藍"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "正在轉錄...",
     "processing": "處理中...",
-    "loadingModel": "正在載入模型..."
+    "loadingModel": "正在載入模型...",
+    "chip": {
+      "editing": "正在編輯"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 可能正在阻擋 1 個快捷鍵",

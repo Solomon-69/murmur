@@ -853,7 +853,7 @@
         "title": "Tastatur-Diagnose",
         "description": "Prüft, ob Tastaturereignisse murmur erreichen. Es wird nur die Anzahl der Ereignisse erfasst — niemals, welche Tasten du drückst.",
         "run": "10-Sekunden-Diagnose starten",
-        "running": "Lauscht… drücke dein Tastenkürzel ein paar Mal (z. B. Control+Shift+Space)",
+        "running": "Lauscht… drücke dein Tastenkürzel ein paar Mal (z. B. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "aktiviert",
         "disabled": "deaktiviert",
@@ -901,6 +901,57 @@
           "description": "Hochleistungs-Inferenz des Whisper-Spracherkennungsmodells von OpenAI",
           "details": "murmur verwendet ggml für schnelle, lokale Sprach-zu-Text-Verarbeitung. Dank an Georgi Gerganov und die Mitwirkenden für ihre großartige Arbeit."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karamell",
+        "umber": "Umbra",
+        "sienna": "Siena",
+        "mauve": "Mauve",
+        "peach": "Pfirsich",
+        "default": "Grau",
+        "terracotta": "Terrakotta",
+        "olive": "Oliv",
+        "ochre": "Ocker",
+        "clay": "Ton",
+        "moss": "Moos",
+        "sand": "Sand",
+        "electric": "Elektrisch",
+        "coral": "Koralle",
+        "violet": "Violett",
+        "tangerine": "Mandarine",
+        "magenta": "Magenta",
+        "aqua": "Aqua",
+        "sage": "Salbei",
+        "rose": "Rosé",
+        "slate": "Schiefer",
+        "lilac": "Flieder",
+        "mushroom": "Pilz",
+        "fogteal": "Nebeltürkis",
+        "groups": {
+          "neutral": "Neutral",
+          "earth": "Erde",
+          "vibey": "Kräftig",
+          "muted": "Gedeckt"
+        },
+        "more": "Mehr Farben"
+      },
+      "clearTint": {
+        "clear": "Klar",
+        "sand": "Sand",
+        "clay": "Ton",
+        "sage": "Salbei",
+        "ochre": "Ocker",
+        "slate": "Schiefer"
+      },
+      "tint": {
+        "black": "Schwarz",
+        "cocoa": "Kakao",
+        "rust": "Rost",
+        "moss": "Moos",
+        "bronze": "Bronze",
+        "slate": "Schiefer"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transkribiere...",
     "processing": "Verarbeite...",
-    "loadingModel": "Modell wird geladen..."
+    "loadingModel": "Modell wird geladen...",
+    "chip": {
+      "editing": "Bearbeiten"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blockiert möglicherweise 1 Tastenkürzel",

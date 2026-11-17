@@ -853,7 +853,7 @@
         "title": "Tastaturdiagnostik",
         "description": "Kontrollerer, om tastaturhændelser når frem til murmur. Kun antallet af hændelser registreres — aldrig hvilke taster du trykker på.",
         "run": "Kør 10 s diagnostik",
-        "running": "Lytter… tryk på din genvej et par gange (f.eks. Control+Shift+Space)",
+        "running": "Lytter… tryk på din genvej et par gange (f.eks. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "aktiveret",
         "disabled": "deaktiveret",
@@ -901,6 +901,57 @@
           "description": "Højtydende tensor-bibliotek til maskinlæringsinferens på enheden",
           "details": "murmurs lokale tale-til-tekst funktionalitet er bygget på transcribe.cpp og ggml. Tak for det fantastiske arbejde af Georgi Gerganov og bidragyderne."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karamel",
+        "umber": "Umbra",
+        "sienna": "Siena",
+        "mauve": "Malva",
+        "peach": "Fersken",
+        "default": "Grå",
+        "terracotta": "Terracotta",
+        "olive": "Oliven",
+        "ochre": "Okker",
+        "clay": "Ler",
+        "moss": "Mos",
+        "sand": "Sand",
+        "electric": "Elektrisk",
+        "coral": "Koral",
+        "violet": "Violet",
+        "tangerine": "Mandarin",
+        "magenta": "Magenta",
+        "aqua": "Aqua",
+        "sage": "Salvie",
+        "rose": "Rosa",
+        "slate": "Skifer",
+        "lilac": "Lilla",
+        "mushroom": "Svamp",
+        "fogteal": "Tågeturkis",
+        "groups": {
+          "neutral": "Neutrale",
+          "earth": "Jord",
+          "vibey": "Livlige",
+          "muted": "Dæmpede"
+        },
+        "more": "Flere farver"
+      },
+      "clearTint": {
+        "clear": "Klar",
+        "sand": "Sand",
+        "clay": "Ler",
+        "sage": "Salvie",
+        "ochre": "Okker",
+        "slate": "Skifer"
+      },
+      "tint": {
+        "black": "Sort",
+        "cocoa": "Kakao",
+        "rust": "Rust",
+        "moss": "Mos",
+        "bronze": "Bronze",
+        "slate": "Skifer"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transskriberer...",
     "processing": "Behandler...",
-    "loadingModel": "Indlæser model..."
+    "loadingModel": "Indlæser model...",
+    "chip": {
+      "editing": "Redigerer"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokerer muligvis 1 genvej",

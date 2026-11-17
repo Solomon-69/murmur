@@ -3,7 +3,7 @@
 
 <h1 align="center">murmur</h1>
 
-<p align="center"><b>Talk instead of type on your Mac, offline.</b><br>Hold Control, Shift and Space, speak, let go. The text appears where your cursor is.</p>
+<p align="center"><b>Talk instead of type on your Mac, offline.</b><br>Hold Option and Space, speak, let go. The text appears where your cursor is.</p>
 
 <p align="center">
   <a href="https://github.com/Solomon-69/murmur/releases/latest"><img alt="Latest version" src="https://img.shields.io/github/v/release/Solomon-69/murmur?label=version&color=4a4a50&style=flat-square"></a>
@@ -25,7 +25,7 @@
 
 <table align="center">
   <tr>
-    <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/bar-listening-anim.webp" width="260" alt="Recording bar while you talk"><br><sub>Hold Control, Shift and Space, talk</sub></td>
+    <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/bar-listening-anim.webp" width="260" alt="Recording bar while you talk"><br><sub>Hold Option and Space, talk</sub></td>
     <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/bar-transcribing-anim.webp" width="130" alt="Recording bar while murmur writes"><br><sub>Written on your Mac</sub></td>
     <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/bar-choice.webp" width="300" alt="As is, Prompt or Clean up"><br><sub>Turn it into a prompt</sub></td>
   </tr>
@@ -50,7 +50,7 @@ Download **[murmur.dmg](https://github.com/Solomon-69/murmur/releases/latest/dow
 ## Use
 
 1. Click into any text box.
-2. Hold Control, Shift and Space, speak, and let go.
+2. Hold Option and Space, speak, and let go.
 3. Your words appear where the cursor is.
 
 You can change the shortcut on the General page in Settings, and choose between holding it or tapping it once.

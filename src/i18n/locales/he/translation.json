@@ -853,7 +853,7 @@
         "title": "אבחון מקלדת",
         "description": "בודק אם אירועי מקלדת מגיעים ל-murmur. נרשם רק מספר האירועים — לעולם לא אילו מקשים הקשת.",
         "run": "הרצת אבחון של 10 שניות",
-        "running": "מאזין… הקש על קיצור המקשים שלך כמה פעמים (למשל Control+Shift+Space)",
+        "running": "מאזין… הקש על קיצור המקשים שלך כמה פעמים (למשל Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "מופעל",
         "disabled": "מושבת",
@@ -901,6 +901,57 @@
           "description": "הסקה מהירה לביצועים גבוהים עבור מודל זיהוי הדיבור Whisper של OpenAI",
           "details": "murmur משתמש ב-ggml לתמלול מהיר ומקומי. תודה לעבודה המדהימה של Georgi Gerganov וכל התורמים."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "קרמל",
+        "umber": "אומבר",
+        "sienna": "סיינה",
+        "mauve": "מוב",
+        "peach": "אפרסק",
+        "default": "אפור",
+        "terracotta": "טרקוטה",
+        "olive": "זית",
+        "ochre": "אוקר",
+        "clay": "חימר",
+        "moss": "טחב",
+        "sand": "חול",
+        "electric": "חשמלי",
+        "coral": "אלמוג",
+        "violet": "סגול",
+        "tangerine": "מנדרינה",
+        "magenta": "מג'נטה",
+        "aqua": "אקווה",
+        "sage": "מרווה",
+        "rose": "ורוד",
+        "slate": "צפחה",
+        "lilac": "לילך",
+        "mushroom": "פטרייה",
+        "fogteal": "טורקיז ערפילי",
+        "groups": {
+          "neutral": "ניטרליים",
+          "earth": "אדמה",
+          "vibey": "עזים",
+          "muted": "מעומעמים"
+        },
+        "more": "עוד צבעים"
+      },
+      "clearTint": {
+        "clear": "שקוף",
+        "sand": "חול",
+        "clay": "חימר",
+        "sage": "מרווה",
+        "ochre": "אוקר",
+        "slate": "צפחה"
+      },
+      "tint": {
+        "black": "שחור",
+        "cocoa": "קקאו",
+        "rust": "חלודה",
+        "moss": "טחב",
+        "bronze": "ברונזה",
+        "slate": "צפחה"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "מתמלל...",
     "processing": "מעבד...",
-    "loadingModel": "טוען מודל..."
+    "loadingModel": "טוען מודל...",
+    "chip": {
+      "editing": "עורך"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "ייתכן ש-{{name}} חוסם קיצור דרך אחד",

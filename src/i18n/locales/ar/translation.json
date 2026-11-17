@@ -853,7 +853,7 @@
         "title": "تشخيص لوحة المفاتيح",
         "description": "يتحقق مما إذا كانت أحداث لوحة المفاتيح تصل إلى murmur. يُسجَّل عدد الأحداث فقط — ولا تُسجَّل أبدًا المفاتيح التي تضغط عليها.",
         "run": "تشغيل تشخيص لمدة 10 ثوانٍ",
-        "running": "جارٍ الاستماع… اضغط اختصارك عدة مرات (مثل Control+Shift+Space)",
+        "running": "جارٍ الاستماع… اضغط اختصارك عدة مرات (مثل Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "مُفعَّل",
         "disabled": "مُعطَّل",
@@ -901,6 +901,57 @@
           "description": "استنتاج عالي الأداء لنموذج التعرف التلقائي على الكلام Whisper من OpenAI",
           "details": ".يستخدم murmur برنامج ggml لمعالجة سريعة ومحلية لتحويل الكلام إلى نص. شكراً للعمل الرائع الذي قام به Georgi Gerganov والمساهمون"
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "كراميل",
+        "umber": "أومبر",
+        "sienna": "سيينا",
+        "mauve": "موف",
+        "peach": "خوخي",
+        "default": "رمادي",
+        "terracotta": "تيراكوتا",
+        "olive": "زيتوني",
+        "ochre": "مغرة",
+        "clay": "طيني",
+        "moss": "طحلبي",
+        "sand": "رملي",
+        "electric": "كهربائي",
+        "coral": "مرجاني",
+        "violet": "بنفسجي",
+        "tangerine": "يوسفي",
+        "magenta": "أرجواني",
+        "aqua": "مائي",
+        "sage": "مريمية",
+        "rose": "وردي",
+        "slate": "أردوازي",
+        "lilac": "ليلكي",
+        "mushroom": "فطري",
+        "fogteal": "أزرق ضبابي",
+        "groups": {
+          "neutral": "محايد",
+          "earth": "ترابي",
+          "vibey": "حيوي",
+          "muted": "هادئ"
+        },
+        "more": "ألوان أخرى"
+      },
+      "clearTint": {
+        "clear": "شفاف",
+        "sand": "رملي",
+        "clay": "طيني",
+        "sage": "مريمية",
+        "ochre": "مغرة",
+        "slate": "أردوازي"
+      },
+      "tint": {
+        "black": "أسود",
+        "cocoa": "كاكاو",
+        "rust": "صدئي",
+        "moss": "طحلبي",
+        "bronze": "برونزي",
+        "slate": "أردوازي"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "جاري التفريغ...",
     "processing": "جاري المعالجة...",
-    "loadingModel": "جارٍ تحميل النموذج..."
+    "loadingModel": "جارٍ تحميل النموذج...",
+    "chip": {
+      "editing": "جارٍ التحرير"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "قد يحظر {{name}} اختصارًا واحدًا",

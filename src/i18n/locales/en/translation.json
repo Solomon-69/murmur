@@ -380,7 +380,7 @@
           },
           "command_mode": {
             "name": "Command Mode Shortcut",
-            "description": "Select text, hold this shortcut and say what to change. The selection is rewritten on this Mac and pasted back."
+            "description": "Select text, hold this shortcut and say what to change. The selection is rewritten and pasted back."
           }
         },
         "errors": {
@@ -888,7 +888,7 @@
         "title": "Keyboard Diagnostic",
         "description": "Checks whether keyboard events reach murmur. Only event counts are recorded — never which keys you press.",
         "run": "Run 10s diagnostic",
-        "running": "Listening… press your shortcut a few times (e.g. Control+Shift+Space)",
+        "running": "Listening… press your shortcut a few times (e.g. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "enabled",
         "disabled": "disabled",
@@ -986,6 +986,9 @@
         "clay": "Clay",
         "moss": "Moss",
         "sand": "Sand",
+        "caramel": "Caramel",
+        "umber": "Umber",
+        "sienna": "Sienna",
         "electric": "Electric",
         "coral": "Coral",
         "violet": "Violet",
@@ -998,6 +1001,8 @@
         "lilac": "Lilac",
         "mushroom": "Mushroom",
         "fogteal": "Fog teal",
+        "mauve": "Mauve",
+        "peach": "Peach",
         "groups": {
           "neutral": "Neutral",
           "earth": "Earth",
@@ -1005,10 +1010,6 @@
           "muted": "Muted"
         },
         "more": "More colours"
-      },
-      "opacity": {
-        "title": "Opacity",
-        "description": "How see-through the bar is"
       },
       "promptChip": {
         "title": "Turn into a prompt",
@@ -1034,21 +1035,21 @@
         "title": "Glass colour",
         "description": "Colour of the black glass. It stays the same whatever is behind the bar.",
         "black": "Black",
-        "graphite": "Graphite",
-        "navy": "Navy",
-        "plum": "Plum",
-        "forest": "Forest",
-        "cocoa": "Cocoa"
+        "cocoa": "Cocoa",
+        "rust": "Rust",
+        "moss": "Moss",
+        "bronze": "Bronze",
+        "slate": "Slate"
       },
       "clearTint": {
         "title": "Glass colour",
-        "description": "A light tint over the clear glass. The bar stays see-through.",
+        "description": "An earthy tint over the clear glass. The bar stays see-through.",
         "clear": "Clear",
-        "frost": "Frost",
-        "sand": "Warm sand",
-        "rose": "Rose",
+        "sand": "Sand",
+        "clay": "Clay",
         "sage": "Sage",
-        "sky": "Sky"
+        "ochre": "Ochre",
+        "slate": "Slate"
       },
       "sections": {
         "app": "App",
@@ -1118,6 +1119,7 @@
     "smart": {
       "title": "Smart features",
       "intro": "Everything that makes dictation feel effortless. Each one runs on this Mac.",
+      "introWindows": "Everything that makes dictation feel effortless. Each one runs on this PC.",
       "example": "Example",
       "handsFree": {
         "title": "Hands-free",
@@ -1235,7 +1237,8 @@
       "clean": "Clean up",
       "engineering": "Prompt engineering...",
       "prompting": "Prompting",
-      "cleaning": "Cleaning up..."
+      "cleaning": "Cleaning up...",
+      "editing": "Editing"
     }
   },
   "secureInput": {

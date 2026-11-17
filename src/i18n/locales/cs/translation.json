@@ -853,7 +853,7 @@
         "title": "Diagnostika klávesnice",
         "description": "Ověří, zda události klávesnice dorazí do murmur. Zaznamenává se pouze počet událostí — nikdy to, které klávesy stisknete.",
         "run": "Spustit 10s diagnostiku",
-        "running": "Naslouchání… několikrát stiskněte svou zkratku (např. Control+Shift+Space)",
+        "running": "Naslouchání… několikrát stiskněte svou zkratku (např. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "zapnuto",
         "disabled": "vypnuto",
@@ -901,6 +901,57 @@
           "description": "Vysoce výkonné inferenční zpracování modelu automatického rozpoznávání řeči Whisper od OpenAI",
           "details": "murmur používá ggml pro rychlé lokální zpracování řeči na text. Díky skvělé práci Georgiho Gerganova a přispěvatelů."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karamel",
+        "umber": "Umbra",
+        "sienna": "Siena",
+        "mauve": "Slézová",
+        "peach": "Broskev",
+        "default": "Šedá",
+        "terracotta": "Terakota",
+        "olive": "Olivová",
+        "ochre": "Okrová",
+        "clay": "Hlína",
+        "moss": "Mech",
+        "sand": "Písek",
+        "electric": "Elektrická",
+        "coral": "Korálová",
+        "violet": "Fialová",
+        "tangerine": "Mandarinková",
+        "magenta": "Purpurová",
+        "aqua": "Akva",
+        "sage": "Šalvěj",
+        "rose": "Růžová",
+        "slate": "Břidlice",
+        "lilac": "Šeříková",
+        "mushroom": "Houbová",
+        "fogteal": "Mlhavá tyrkysová",
+        "groups": {
+          "neutral": "Neutrální",
+          "earth": "Zemité",
+          "vibey": "Výrazné",
+          "muted": "Tlumené"
+        },
+        "more": "Další barvy"
+      },
+      "clearTint": {
+        "clear": "Průhledná",
+        "sand": "Písek",
+        "clay": "Hlína",
+        "sage": "Šalvěj",
+        "ochre": "Okr",
+        "slate": "Břidlice"
+      },
+      "tint": {
+        "black": "Černá",
+        "cocoa": "Kakao",
+        "rust": "Rez",
+        "moss": "Mech",
+        "bronze": "Bronz",
+        "slate": "Břidlice"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Přepisuji...",
     "processing": "Zpracovávám...",
-    "loadingModel": "Načítání modelu..."
+    "loadingModel": "Načítání modelu...",
+    "chip": {
+      "editing": "Úpravy"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} může blokovat 1 zkratku",

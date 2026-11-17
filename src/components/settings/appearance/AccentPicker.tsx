@@ -174,7 +174,7 @@ export const AccentPicker: React.FC<AccentPickerProps> = ({
   return (
     <div
       ref={wrapRef}
-      className="relative mx-auto flex w-fit flex-wrap items-center justify-center gap-x-2.5 gap-y-3 py-1"
+      className="relative flex w-fit flex-nowrap items-center justify-center gap-2.5"
       onBlur={(e) => {
         if (open && !wrapRef.current?.contains(e.relatedTarget as Node))
           setOpen(false);

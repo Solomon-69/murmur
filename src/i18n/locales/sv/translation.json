@@ -853,7 +853,7 @@
         "title": "Tangentbordsdiagnostik",
         "description": "Kontrollerar om tangentbordshändelser når murmur. Endast antalet händelser registreras — aldrig vilka tangenter du trycker på.",
         "run": "Kör 10 s diagnostik",
-        "running": "Lyssnar… tryck på ditt kortkommando några gånger (t.ex. Control+Shift+Space)",
+        "running": "Lyssnar… tryck på ditt kortkommando några gånger (t.ex. Option+Space)",
         "secureInputLabel": "Secure Input",
         "enabled": "aktiverat",
         "disabled": "inaktiverat",
@@ -901,6 +901,57 @@
           "description": "Högpresterande inferens av OpenAI:s Whisper-modell för automatisk taligenkänning",
           "details": "murmur använder ggml för snabb, lokal tal-till-text-behandling. Tack till det fantastiska arbete som utförts av Georgi Gerganov med medarbetare."
         }
+      }
+    },
+    "appearance": {
+      "accent": {
+        "caramel": "Karamell",
+        "umber": "Umbra",
+        "sienna": "Siena",
+        "mauve": "Malva",
+        "peach": "Persika",
+        "default": "Grå",
+        "terracotta": "Terrakotta",
+        "olive": "Oliv",
+        "ochre": "Ockra",
+        "clay": "Lera",
+        "moss": "Mossa",
+        "sand": "Sand",
+        "electric": "Elektrisk",
+        "coral": "Korall",
+        "violet": "Violett",
+        "tangerine": "Mandarin",
+        "magenta": "Magenta",
+        "aqua": "Aqua",
+        "sage": "Salvia",
+        "rose": "Rosa",
+        "slate": "Skiffer",
+        "lilac": "Lila",
+        "mushroom": "Svamp",
+        "fogteal": "Dimturkos",
+        "groups": {
+          "neutral": "Neutrala",
+          "earth": "Jord",
+          "vibey": "Livfulla",
+          "muted": "Dämpade"
+        },
+        "more": "Fler färger"
+      },
+      "clearTint": {
+        "clear": "Klar",
+        "sand": "Sand",
+        "clay": "Lera",
+        "sage": "Salvia",
+        "ochre": "Ockra",
+        "slate": "Skiffer"
+      },
+      "tint": {
+        "black": "Svart",
+        "cocoa": "Kakao",
+        "rust": "Rost",
+        "moss": "Mossa",
+        "bronze": "Brons",
+        "slate": "Skiffer"
       }
     }
   },
@@ -980,7 +1031,10 @@
   "overlay": {
     "transcribing": "Transkriberar...",
     "processing": "Bearbetar...",
-    "loadingModel": "Laddar modell..."
+    "loadingModel": "Laddar modell...",
+    "chip": {
+      "editing": "Redigerar"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} kanske blockerar 1 kortkommando",

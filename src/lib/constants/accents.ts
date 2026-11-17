@@ -24,6 +24,9 @@ export const ACCENT_GROUPS: AccentGroup[] = [
       clay: "#9a5b47",
       moss: "#4f6b4a",
       sand: "#b39567",
+      caramel: "#b5793f",
+      umber: "#6b4f3f",
+      sienna: "#a0522d",
     },
   },
   {
@@ -46,6 +49,8 @@ export const ACCENT_GROUPS: AccentGroup[] = [
       lilac: "#9e95b5",
       mushroom: "#a39587",
       fogteal: "#7fa3a0",
+      mauve: "#a8818c",
+      peach: "#d29b82",
     },
   },
 ];

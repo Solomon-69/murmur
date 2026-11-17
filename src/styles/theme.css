@@ -314,6 +314,11 @@
 :root[data-accent="lilac"] { --light-color-logo-primary: #7a7190; --dark-color-logo-primary: #7a7190; --color-logo-primary: #7a7190; } /* swatch #9e95b5 */
 :root[data-accent="mushroom"] { --light-color-logo-primary: #827467; --dark-color-logo-primary: #827467; --color-logo-primary: #827467; } /* swatch #a39587 */
 :root[data-accent="fogteal"] { --light-color-logo-primary: #5a7d7a; --dark-color-logo-primary: #5a7d7a; --color-logo-primary: #5a7d7a; } /* swatch #7fa3a0 */
+:root[data-accent="caramel"] { --light-color-logo-primary: #95602a; --dark-color-logo-primary: #95602a; --color-logo-primary: #95602a; } /* swatch #b5793f */
+:root[data-accent="umber"] { --light-color-logo-primary: #6b4f3f; --dark-color-logo-primary: #6b4f3f; --color-logo-primary: #6b4f3f; }
+:root[data-accent="sienna"] { --light-color-logo-primary: #a0522d; --dark-color-logo-primary: #a0522d; --color-logo-primary: #a0522d; }
+:root[data-accent="mauve"] { --light-color-logo-primary: #85606b; --dark-color-logo-primary: #85606b; --color-logo-primary: #85606b; } /* swatch #a8818c */
+:root[data-accent="peach"] { --light-color-logo-primary: #955e47; --dark-color-logo-primary: #955e47; --color-logo-primary: #955e47; } /* swatch #d29b82 */
 
 /* murmur wordmark bands follow the accent (Grey keeps the grey fallbacks in
    MurmurTextLogo.tsx). Light: deep accent fading toward the background.

@@ -18,13 +18,13 @@ if (import.meta.env.DEV && !w.__TAURI_INTERNALS__) {
   });
 
   const settings: Record<string, unknown> = {
-    settings_schema_version: 4,
+    settings_schema_version: 5,
     bindings: {
       transcribe: bind(
         "transcribe",
         "Transcribe",
         "Converts your speech into text.",
-        "ctrl+shift+space",
+        "option+space",
       ),
       transcribe_with_post_process: bind(
         "transcribe_with_post_process",
@@ -230,7 +230,10 @@ if (import.meta.env.DEV && !w.__TAURI_INTERNALS__) {
     get_clamshell_microphone: () => "Default",
     get_microphone_mode: () => false,
     get_microphone_channels: () => 1,
-    get_available_accelerators: () => ({ transcribe: ["auto"], gpu_devices: [] }),
+    get_available_accelerators: () => ({
+      transcribe: ["auto"],
+      gpu_devices: [],
+    }),
     get_available_typing_tools: () => ["auto"],
     get_keyboard_implementation: () => "tauri",
     get_secure_input_status: () => false,

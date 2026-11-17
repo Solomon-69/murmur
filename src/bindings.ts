@@ -1272,8 +1272,8 @@ overlay_glass?: string;
  */
 overlay_glass_tint?: string; 
 /**
- * Colour of the clear glass: "clear", "frost", "sand", "rose", "sage"
- * or "sky". Light tints laid over the see-through bar.
+ * Colour of the clear glass: "clear", "sand", "clay", "sage", "ochre"
+ * or "slate". Earthy tints laid over the see-through bar.
  */
 overlay_clear_tint?: string; 
 /**
