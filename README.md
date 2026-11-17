@@ -3,7 +3,7 @@
 
 <h1 align="center">murmur</h1>
 
-<p align="center"><b>Talk instead of type on your Mac, offline.</b><br>Hold Option and Space, speak, let go. The text appears where your cursor is.</p>
+<p align="center"><b>Talk instead of type on Mac and Windows, offline.</b><br>Hold Option and Space, speak, let go. The text appears where your cursor is.</p>
 
 <p align="center">
   <a href="https://github.com/Solomon-69/murmur/releases/latest"><img alt="Latest version" src="https://img.shields.io/github/v/release/Solomon-69/murmur?label=version&color=4a4a50&style=flat-square"></a>
@@ -37,6 +37,16 @@
     <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://solomon-69.github.io/murmur/img/shots/win-colours-dark.webp"><img src="https://solomon-69.github.io/murmur/img/shots/win-colours-light.webp" width="400" alt="Appearance settings: glass, size, place and the colour picker"></picture><br><sub>Appearance</sub></td>
   </tr>
 </table>
+<p align="center"><img src="https://solomon-69.github.io/murmur/img/shots/mac-appearance-new.webp" width="560" alt="Appearance page: six colours per row, earthy glass tints"><br><sub>Appearance: six colours per row, earthy glass tints</sub></p>
+
+<h3 align="center">On Windows too</h3>
+<table align="center">
+  <tr>
+    <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/win10-welcome.webp" width="400" alt="Welcome screen on Windows 11"><br><sub>First run on Windows 11</sub></td>
+    <td align="center"><img src="https://solomon-69.github.io/murmur/img/shots/win10-settings.webp" width="400" alt="General settings on Windows, Ctrl Alt Space"><br><sub>Hold Ctrl + Alt + Space</sub></td>
+  </tr>
+</table>
+<p align="center"><img src="https://solomon-69.github.io/murmur/img/shots/win10-bar.webp" width="300" alt="Recording bar above the Windows taskbar"></p>
 <!-- murmur-visuals:end -->
 
 The speech model runs on your Mac, so what you say stays on your Mac. murmur is free and open source (MIT).
