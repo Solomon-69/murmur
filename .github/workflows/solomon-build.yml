@@ -156,7 +156,9 @@ jobs:
           security set-keychain-settings -lut 3600 "$KC"
           security unlock-keychain -p "$KCPW" "$KC"
           security import "$RUNNER_TEMP/murmur.p12" -k "$KC" -P "$P12_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KCPW" "$KC" >/dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPW" "$KC" >/dev/null 2>&1 \
+            || echo "::warning::set-key-partition-list failed; codesign may still work"
           rm -f "$RUNNER_TEMP/murmur.p12"
           ID=$(security find-identity -p codesigning "$KC" | awk '/Murmur Code Signing/ {print $2; exit}')
           [ -n "$ID" ] || { echo "::error::Signing identity not found in keychain"; exit 1; }
