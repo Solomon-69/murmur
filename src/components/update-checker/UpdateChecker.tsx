@@ -6,6 +6,7 @@ import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { arch, platform } from "@tauri-apps/plugin-os";
 import { ProgressBar } from "../shared";
+import { Button } from "../ui/Button";
 import { useSettings } from "../../hooks/useSettings";
 import { commands } from "../../bindings";
 import {
@@ -15,9 +16,14 @@ import {
 
 interface UpdateCheckerProps {
   className?: string;
+  /** "link" is the small footer text; "button" is a real button (About page). */
+  appearance?: "link" | "button";
 }
 
-const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
+const UpdateChecker: React.FC<UpdateCheckerProps> = ({
+  className = "",
+  appearance = "link",
+}) => {
   const { t } = useTranslation();
   // Update checking state
   const [isChecking, setIsChecking] = useState(false);
@@ -242,7 +248,41 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
         </div>
       )}
       <div className={`flex items-center gap-3 ${className}`}>
-        {isUpdateClickable ? (
+        {appearance === "button" ? (
+          <Button
+            variant={updateAvailable && !isInstalling ? "primary" : "secondary"}
+            size="md"
+            onClick={getUpdateStatusAction()}
+            disabled={!isUpdateClickable}
+            aria-busy={isChecking || isInstalling}
+            className="tabular-nums min-w-[9.5rem]"
+          >
+            {(isChecking || isInstalling) && (
+              <svg
+                className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  strokeOpacity="0.25"
+                  strokeWidth="3"
+                />
+                <path
+                  d="M21 12a9 9 0 0 0-9-9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+            {getUpdateStatusText()}
+          </Button>
+        ) : isUpdateClickable ? (
           <button
             onClick={getUpdateStatusAction()}
             disabled={isUpdateDisabled}

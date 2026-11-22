@@ -27,6 +27,7 @@ mod overlay_placement;
 mod paste_guard;
 mod paste_last;
 mod paste_tx;
+mod permission_repair;
 pub mod portable;
 mod prompt_chip;
 mod prompt_detect;
@@ -340,6 +341,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     // even before Tauri state is populated.
     let model_manager =
         Arc::new(ModelManager::new(app_handle).expect("Failed to initialize model manager"));
+    // After an update, fix Accessibility/Microphone entries that still show ON
+    // in System Settings but no longer match this build's signature.
+    permission_repair::repair_stale_permissions(app_handle);
     let transcription_manager = Arc::new(
         TranscriptionManager::new(app_handle, model_manager.clone())
             .expect("Failed to initialize transcription manager"),

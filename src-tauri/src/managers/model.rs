@@ -487,6 +487,30 @@ fn remove_file_if_present(path: &Path) -> std::io::Result<bool> {
     }
 }
 
+/// Extra copies of one model file that are safe to delete. `hf_copies` must be
+/// in lookup order (`hf_cached_paths_in`) and `local` is the models-dir copy.
+/// The kept copy is the one `get_model_path` would load: the first complete
+/// HF cache copy, else the models-dir copy. Nothing is returned unless a
+/// complete keeper exists, so a model never ends up with no copy at all.
+/// Dangling snapshot pointers count as extras; they hold no data.
+fn duplicate_copies(hf_copies: &[PathBuf], local: Option<&Path>) -> Vec<PathBuf> {
+    let local = local.filter(|path| path.is_file()).map(Path::to_path_buf);
+    let keeper = hf_copies
+        .iter()
+        .find(|path| path.is_file())
+        .cloned()
+        .or_else(|| local.clone());
+    let Some(keeper) = keeper else {
+        return Vec::new();
+    };
+    hf_copies
+        .iter()
+        .cloned()
+        .chain(local)
+        .filter(|path| *path != keeper)
+        .collect()
+}
+
 /// Friendly name advertised by GGUF metadata, if present. Empty strings are not
 /// useful display names, so callers can keep their filename/repo fallback.
 fn probed_display_name(probe: &CapabilityProbe) -> Option<String> {
@@ -1087,6 +1111,9 @@ impl ModelManager {
         // Check which models are already downloaded
         manager.update_download_status()?;
 
+        // Old builds and caches can leave several copies of one model.
+        manager.remove_duplicate_model_copies();
+
         // Auto-select a model if none is currently selected
         manager.auto_select_model_if_needed()?;
 
@@ -1443,6 +1470,95 @@ impl ModelManager {
         }
 
         Ok(deleted)
+    }
+
+    /// Delete extra copies of downloaded models left by earlier builds: the
+    /// same file in several HF snapshots, in the pre-v0.9.6 portable cache,
+    /// or in both the HF cache and the models dir. One copy of each model
+    /// stays: the copy the app loads, so the selected model keeps working.
+    /// Different quants of a model are different files and are left alone.
+    /// Returns the bytes freed. Errors are logged, never fatal.
+    fn remove_duplicate_model_copies(&self) -> u64 {
+        let selected = get_settings(&self.app_handle).selected_model;
+        // The selected model's file, as the app opens it and as resolved
+        // through any HF snapshot symlink to its blob.
+        let selected_raw = if selected.is_empty() {
+            None
+        } else {
+            self.get_model_path(&selected).ok()
+        };
+        let selected_real = selected_raw
+            .as_ref()
+            .map(|p| fs::canonicalize(p).unwrap_or_else(|_| p.clone()));
+        let models: Vec<ModelInfo> = self
+            .available_models
+            .lock()
+            .unwrap()
+            .values()
+            .filter(|m| m.is_downloaded && !m.is_downloading)
+            .cloned()
+            .collect();
+        let caches = hf_caches();
+        let mut freed = 0u64;
+        let mut seen: HashSet<(String, String)> = HashSet::new();
+        for model in models {
+            let ModelSource::HuggingFace { repo_id, revision } = &model.source else {
+                continue;
+            };
+            if !seen.insert((repo_id.clone(), model.filename.clone())) {
+                continue;
+            }
+            let hf_copies = hf_cached_paths_in(&caches, repo_id, revision, &model.filename);
+            let local = self.models_dir.join(&model.filename);
+            let extras = duplicate_copies(&hf_copies, Some(&local));
+            if extras.is_empty() {
+                continue;
+            }
+            let deleting: HashSet<PathBuf> = extras.iter().cloned().collect();
+            for path in &extras {
+                // Never touch the file the selected model loads from.
+                if selected_raw.as_ref() == Some(path) || selected_real.as_ref() == Some(path) {
+                    continue;
+                }
+                let size = fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+                let is_symlink = fs::symlink_metadata(path)
+                    .map(|m| m.file_type().is_symlink())
+                    .unwrap_or(false);
+                // `unshared_blob` keeps any blob another kept pointer (the
+                // keeper included) still references.
+                let blob = if is_symlink {
+                    unshared_blob(path, &deleting).unwrap_or_else(|e| {
+                        warn!("Keeping HF cache blob for {:?}: {}", path, e);
+                        None
+                    })
+                } else {
+                    None
+                };
+                if let Some(blob) = &blob {
+                    if selected_real.as_ref() == Some(blob) {
+                        continue;
+                    }
+                    match remove_file_if_present(blob) {
+                        Ok(true) => freed += size,
+                        Ok(false) => {}
+                        Err(e) => {
+                            warn!("Couldn't delete duplicate model blob: {}", e);
+                            continue;
+                        }
+                    }
+                } else if !is_symlink {
+                    freed += size;
+                }
+                match remove_file_if_present(path) {
+                    Ok(_) => info!("Deleted duplicate copy of {} at {:?}", model.id, path),
+                    Err(e) => warn!("Couldn't delete duplicate model copy: {}", e),
+                }
+            }
+        }
+        if freed > 0 {
+            info!("Freed {} MB of duplicate model copies", freed / 1_000_000);
+        }
+        freed
     }
 
     fn auto_select_model_if_needed(&self) -> Result<()> {
@@ -2647,6 +2763,44 @@ mod tests {
         fs::write(repo_dir.join("refs").join(revision), revision).unwrap();
         fs::write(&snapshot, b"model").unwrap();
         snapshot
+    }
+
+    #[test]
+    fn test_duplicate_copies_keeps_the_copy_the_app_loads() {
+        let cache = TempDir::new().unwrap();
+        let models = TempDir::new().unwrap();
+        let repo = "handy-computer/parakeet-ultra-gguf";
+        let pinned = add_cached_model(cache.path(), repo, "pin", "p.gguf");
+        let older = add_cached_model(cache.path(), repo, "older", "p.gguf");
+        let local = models.path().join("p.gguf");
+        fs::write(&local, b"model").unwrap();
+        let caches = vec![Cache::new(cache.path().to_path_buf())];
+        let copies = hf_cached_paths_in(&caches, repo, "pin", "p.gguf");
+        assert_eq!(copies.first(), Some(&pinned));
+        assert_eq!(hf_cached_path_in(&caches, repo, "pin", "p.gguf"), Some(pinned.clone()));
+        let extras = duplicate_copies(&copies, Some(&local));
+        assert!(!extras.contains(&pinned));
+        assert!(extras.contains(&older));
+        assert!(extras.contains(&local));
+        assert_eq!(extras.len(), 2);
+    }
+
+    #[test]
+    fn test_duplicate_copies_single_copy_is_never_deleted() {
+        let cache = TempDir::new().unwrap();
+        let models = TempDir::new().unwrap();
+        let repo = "someone/model";
+        add_cached_model(cache.path(), repo, "main", "m.gguf");
+        let caches = vec![Cache::new(cache.path().to_path_buf())];
+        let copies = hf_cached_paths_in(&caches, repo, "main", "m.gguf");
+        let missing = models.path().join("m.gguf");
+        assert!(duplicate_copies(&copies, Some(&missing)).is_empty());
+        // Only a models-dir copy: it is the keeper.
+        let local = models.path().join("x.gguf");
+        fs::write(&local, b"model").unwrap();
+        assert!(duplicate_copies(&[], Some(&local)).is_empty());
+        // No complete copy anywhere: nothing is deleted.
+        assert!(duplicate_copies(&[], None).is_empty());
     }
 
     #[test]

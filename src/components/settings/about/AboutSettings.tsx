@@ -57,7 +57,7 @@ export const AboutSettings: React.FC = () => {
           })}
           grouped={true}
         >
-          <UpdateChecker />
+          <UpdateChecker appearance="button" />
         </SettingContainer>
 
         <ShowWhatsNewOnUpdate descriptionMode="tooltip" grouped={true} />
