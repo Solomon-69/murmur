@@ -58,10 +58,14 @@ pub fn handle_shortcut_event(
         return;
     };
 
-    // Cancel binding: only fires when recording and key is pressed
+    // Cancel binding: fires while recording, transcribing, polishing or
+    // prompting (any job in progress, or the bubble still on screen).
     if binding_id == "cancel" {
         let audio_manager = app.state::<Arc<AudioRecordingManager>>();
-        if audio_manager.is_recording() && is_pressed {
+        let busy = audio_manager.is_recording()
+            || crate::tray::dictation_in_progress(app)
+            || crate::overlay::is_session_showing();
+        if busy && is_pressed {
             action.start(app, binding_id, hotkey_string);
         }
         return;

@@ -564,7 +564,19 @@ fn apply_on_main(app: &AppHandle) {
     let mut menu_ok = false;
     if menu_changed {
         match build_menu(app, &desired.menu) {
-            Ok((menu, tooltip)) => match tray.set_menu(Some(menu)) {
+            // macOS uses the popover dropdown (tray_popover.rs), so no
+            // native menu is attached there: it would open on right click.
+            Ok((menu, tooltip)) => match {
+                #[cfg(target_os = "macos")]
+                {
+                    let _ = menu;
+                    Ok::<(), tauri::Error>(())
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    tray.set_menu(Some(menu))
+                }
+            } {
                 Ok(()) => {
                     menu_ok = true;
                     // Best-effort: logged, not retried. The tooltip is cosmetic

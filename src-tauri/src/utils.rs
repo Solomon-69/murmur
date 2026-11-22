@@ -118,7 +118,12 @@ pub fn cancel_current_operation(app: &AppHandle) {
 
     // Update tray icon and hide overlay
     set_tray_state(app, crate::tray::TrayIconState::Idle);
-    hide_recording_overlay(app);
+    // A prompt-chip choice still waiting is answered "paste as is" so its
+    // thread stops waiting, and the bubble is hidden at once (no fade, no
+    // generation check), so a force-cancel always clears it.
+    crate::prompt_chip::abort_pending();
+    crate::clipboard::ADD_ONLY_NEXT_PASTE.store(false, std::sync::atomic::Ordering::SeqCst);
+    force_hide_recording_overlay(app);
 
     // Unload model if immediate unload is enabled. Done before notifying the
     // coordinator, so a recording started next always loads afresh; it

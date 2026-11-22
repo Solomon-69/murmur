@@ -1,6 +1,6 @@
-//! Command Mode: select text, hold the Command Mode shortcut, say what to do
-//! ("make this shorter", "translate to French"). The selection is rewritten
-//! on-device by that instruction and pasted over itself.
+//! Command Mode: hold the Command Mode shortcut and talk. The speech goes
+//! through the /prompt v2 rewrite and the result is only added at the cursor;
+//! existing text is never removed or replaced.
 //!
 //! Smart mode does the same without the shortcut: when text is selected as
 //! dictation starts, the speech is taken as the instruction (see
@@ -27,10 +27,12 @@ pub fn build_request(instruction: &str, selection: &str) -> Option<String> {
     if instruction.is_empty() {
         return None;
     }
-    Some(format!("Instruction: {instruction}
+    Some(format!(
+        "Instruction: {instruction}
 
 Text:
-{selection}"))
+{selection}"
+    ))
 }
 
 /// Prefaces the model sometimes puts before the edited text.
@@ -75,20 +77,39 @@ pub fn rewrite_text(app: &AppHandle, instruction: &str, selection: &str) -> Resu
     // The fast online AI (own service or Murmur Cloud) first; the on-device
     // model only when that is missing or fails.
     let system = COMMAND_SYSTEM_PROMPT.trim_start_matches("[[plain]]");
-    let output = match crate::prompt_chip::rewrite_via_api(&s, system, &request, COMMAND_API_TIMEOUT_MS) {
-        Some(Ok(out)) if !out.trim().is_empty() => out,
-        _ => crate::prompt_chip::rewrite_with_timeout(COMMAND_SYSTEM_PROMPT, &request, COMMAND_TIMEOUT_MS)?,
-    };
+    let output =
+        match crate::prompt_chip::rewrite_via_api(&s, system, &request, COMMAND_API_TIMEOUT_MS) {
+            Some(Ok(out)) if !out.trim().is_empty() => out,
+            _ => crate::prompt_chip::rewrite_with_timeout(
+                COMMAND_SYSTEM_PROMPT,
+                &request,
+                COMMAND_TIMEOUT_MS,
+            )?,
+        };
     tidy_output(&output, selection).ok_or_else(|| "Command Mode got an empty result".to_string())
 }
 
-/// Command Mode shortcut: copies the selection, then as `rewrite_text`.
+/// Command Mode shortcut: the speech goes through the /prompt v2 rewrite and
+/// the result is only ADDED at the cursor. Existing text is never removed or
+/// replaced: no selection is copied, and any selection is collapsed to its end
+/// before the paste (see `clipboard::ADD_ONLY_NEXT_PASTE`).
 pub fn rewrite_selection(app: &AppHandle, instruction: &str) -> Result<String, String> {
-    if instruction.trim().is_empty() {
-        return Err("Command Mode heard no instruction".to_string());
+    let speech = add_only_input(instruction)?;
+    let s = crate::settings::get_settings(app);
+    let _ = app.emit_to("recording_overlay", "prompt-chip-working", "prompt");
+    let _done = crate::prompt_chip::WorkingGuard::new(app);
+    let out = crate::prompt_chip::make_prompt_fast(&s, &speech);
+    crate::clipboard::ADD_ONLY_NEXT_PASTE.store(true, std::sync::atomic::Ordering::SeqCst);
+    Ok(out)
+}
+
+/// The spoken text Command Mode works on, or an error when nothing was said.
+pub fn add_only_input(instruction: &str) -> Result<String, String> {
+    let speech = instruction.trim();
+    if speech.is_empty() {
+        return Err("Command Mode heard nothing".to_string());
     }
-    let selection = crate::clipboard::copy_selection(app)?;
-    rewrite_text(app, instruction, &selection)
+    Ok(speech.to_string())
 }
 
 /// How long the online AI gets before the on-device model takes over.
@@ -104,6 +125,12 @@ mod tests {
     use super::*;
 
     #[test]
+    fn command_mode_needs_speech() {
+        assert!(add_only_input("   ").is_err());
+        assert_eq!(add_only_input(" add a line ").unwrap(), "add a line");
+    }
+
+    #[test]
     fn blank_instruction_gives_no_request() {
         assert_eq!(build_request("   ", "text"), None);
     }
@@ -111,7 +138,10 @@ mod tests {
     #[test]
     fn request_carries_instruction_and_text() {
         let request = build_request("  make it shorter ", "Hello there.").unwrap();
-        assert_eq!(request, "Instruction: make it shorter\n\nText:\nHello there.");
+        assert_eq!(
+            request,
+            "Instruction: make it shorter\n\nText:\nHello there."
+        );
     }
 
     #[test]
@@ -137,7 +167,10 @@ mod tests {
 
     #[test]
     fn strips_a_preface() {
-        assert_eq!(tidy_output("Here is the edited text: Hi.", "hi").as_deref(), Some("Hi."));
+        assert_eq!(
+            tidy_output("Here is the edited text: Hi.", "hi").as_deref(),
+            Some("Hi.")
+        );
     }
 
     #[test]

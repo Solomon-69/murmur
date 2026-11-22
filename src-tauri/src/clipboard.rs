@@ -114,6 +114,12 @@ fn run_on_paste_sent() {
 /// Set after "Turn into a prompt": the words as spoken. Once the prompt is
 /// pasted, these go on the clipboard (in place of the prompt or the old
 /// clipboard), so the person can always get back what they said.
+/// Command Mode: the next paste must only add text at the cursor. When text is
+/// selected in the target app, the selection is collapsed to its end first, so
+/// the paste can never replace or remove what is already there.
+pub static ADD_ONLY_NEXT_PASTE: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 pub static ORIGINAL_AFTER_PASTE: Mutex<Option<String>> = Mutex::new(None);
 
 /// Puts the spoken words on the clipboard once every paste path is finished
@@ -953,6 +959,25 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
     result
 }
 
+/// Moves the caret to the end of any selected text (Right arrow), so the next
+/// paste inserts instead of replacing. Nothing is pressed when nothing is selected.
+fn collapse_selection_to_end(app_handle: &AppHandle) {
+    let selected = crate::active_window::frontmost_selected_text().is_some_and(|t| !t.is_empty());
+    if !selected {
+        return;
+    }
+    let result = with_enigo(app_handle, |enigo| {
+        use enigo::{Direction, Key, Keyboard};
+        enigo
+            .key(Key::RightArrow, Direction::Click)
+            .map_err(|e| format!("Failed to collapse selection: {e}"))
+    });
+    if let Err(e) = result {
+        log::warn!("{e}");
+    }
+    std::thread::sleep(Duration::from_millis(40));
+}
+
 fn paste_inner(text: String, app_handle: &AppHandle) -> Result<(), String> {
     let app_handle = app_handle.clone();
     let settings = get_settings(&app_handle);
@@ -987,6 +1012,10 @@ fn paste_inner(text: String, app_handle: &AppHandle) -> Result<(), String> {
     {
         write_text_to_clipboard(&app_handle, &text)?;
         return Err("Your words are on the clipboard: press Cmd+V to paste them".to_string());
+    }
+
+    if ADD_ONLY_NEXT_PASTE.swap(false, std::sync::atomic::Ordering::SeqCst) {
+        collapse_selection_to_end(&app_handle);
     }
 
     // Perform the paste operation

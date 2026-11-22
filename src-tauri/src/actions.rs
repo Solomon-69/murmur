@@ -88,6 +88,7 @@ struct FinishGuard(AppHandle, Arc<TranscriptionManager>);
 impl Drop for FinishGuard {
     fn drop(&mut self) {
         self.1.maybe_unload_immediately("transcription session");
+        crate::shortcut::unregister_cancel_shortcut(&self.0);
         if let Some(c) = self.0.try_state::<TranscriptionCoordinator>() {
             c.notify_processing_finished();
         }
@@ -683,8 +684,9 @@ impl ShortcutAction for TranscribeAction {
         app.state::<Arc<AudioRecordingManager>>()
             .invalidate_recording_readiness();
 
-        // Unregister the cancel shortcut when transcription stops
-        shortcut::unregister_cancel_shortcut(app);
+        // The cancel shortcut (Escape) stays registered while the take is
+        // transcribed, polished and prompted, so any in-progress job can be
+        // force-cancelled. FinishGuard unregisters it when the job ends.
 
         let stop_time = Instant::now();
         debug!("TranscribeAction::stop called for binding: {}", binding_id);
@@ -935,8 +937,13 @@ impl ShortcutAction for TranscribeAction {
                                             command_mode,
                                             selection,
                                         )
-                                        .and_then(|text| utils::paste(text, ah_clone.clone()))
-                                        {
+                                        .and_then(|text| {
+                                            // Cancelled while the prompt was being written.
+                                            if rm_for_paste.was_cancelled_since(cancel_generation) {
+                                                return Err("cancelled".to_string());
+                                            }
+                                            utils::paste(text, ah_clone.clone())
+                                        }) {
                                             Ok(()) => {
                                                 debug!(
                                                     "Text pasted successfully in {:?}",
@@ -956,6 +963,10 @@ impl ShortcutAction for TranscribeAction {
                                                     )
                                                 });
                                                 (TranscriptionOutcome::Typed, notice)
+                                            }
+                                            Err(e) if e == "cancelled" => {
+                                                debug!("Paste dropped: the job was cancelled");
+                                                (TranscriptionOutcome::Failed, None)
                                             }
                                             Err(e) => {
                                                 error!("Failed to paste transcription: {}", e);

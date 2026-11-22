@@ -42,6 +42,7 @@ mod transcription_coordinator;
 mod transcription_hook;
 mod tray;
 mod tray_i18n;
+mod tray_popover;
 mod usage_stats;
 mod utils;
 mod voice_edits;
@@ -138,6 +139,85 @@ pub fn apply_dock_policy(app: &AppHandle) {
     let _ = app;
 }
 
+/// Runs a tray menu (or menu bar dropdown) item by id.
+pub(crate) fn handle_tray_menu_action(app: &AppHandle, id: &str) {
+    match id {
+        "settings" => {
+            show_main_window(app);
+        }
+        "secure_input_warning" => {
+            // Full explanation lives in the settings-window banner
+            show_main_window(app);
+        }
+        "notice" => {
+            show_main_window(app);
+        }
+        "check_updates" => {
+            let settings = settings::get_settings(app);
+            if settings::update_checks_effectively_enabled(&settings) {
+                show_main_window(app);
+                let _ = app.emit("check-for-updates", ());
+            }
+        }
+        "copy_last_transcript" => {
+            tray::copy_last_transcript(app);
+        }
+        "unload_model" => {
+            let transcription_manager = app.state::<Arc<TranscriptionManager>>();
+            if !transcription_manager.is_model_loaded() {
+                log::warn!("No model is currently loaded.");
+                return;
+            }
+            if let Err(e) = transcription_manager.ensure_model_unlocked() {
+                log::warn!("{}", e);
+                return;
+            }
+            transcription_manager.request_unload();
+            log::info!("Model unloaded via tray.");
+        }
+        "cancel" => {
+            use crate::utils::cancel_current_operation;
+
+            // Use centralized cancellation that handles all operations
+            cancel_current_operation(app);
+        }
+        "quit" => {
+            app.exit(0);
+        }
+        id if id.starts_with("model_select:") => {
+            let model_id = id.strip_prefix("model_select:").unwrap().to_string();
+            let current_model = settings::get_settings(app).selected_model;
+            if model_id == current_model {
+                return;
+            }
+            let app_clone = app.clone();
+            std::thread::spawn(move || {
+                match commands::models::switch_active_model(&app_clone, &model_id) {
+                    Ok(()) => {
+                        log::info!("Model switched to {} via tray.", model_id);
+                    }
+                    Err(e) => {
+                        log::error!("Failed to switch model via tray: {}", e);
+                    }
+                }
+                tray::update_tray_menu(&app_clone);
+            });
+        }
+        id if id.starts_with("language_select:") => {
+            let language = id.strip_prefix("language_select:").unwrap().to_string();
+            if let Err(e) =
+                shortcut::change_selected_language_setting(app.clone(), language.clone())
+            {
+                log::error!("Failed to switch language via tray: {}", e);
+                return;
+            }
+            log::info!("Language switched to {} via tray.", language);
+            tray::rebuild_tray_menu(app);
+        }
+        _ => {}
+    }
+}
+
 fn show_main_window(app: &AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
@@ -195,7 +275,7 @@ fn apply_startup_activation_policy(app: &mut tauri::App, headless_mode: bool) {
     let cli_args = app.state::<CliArgs>().inner().clone();
     let settings = settings::get_settings(app.handle());
 
-    let should_hide = settings.start_hidden || cli_args.start_hidden;
+    let should_hide = starts_in_menu_bar(settings.start_hidden, cli_args.start_hidden);
     let tray_available = settings.show_tray_icon && !cli_args.no_tray;
 
     if should_hide && tray_available && !settings.show_in_dock {
@@ -204,8 +284,27 @@ fn apply_startup_activation_policy(app: &mut tauri::App, headless_mode: bool) {
     }
 }
 
+/// macOS always opens to the menu bar icon only (no settings window), like
+/// Solomon's other menu bar apps. Elsewhere the "start hidden" setting or
+/// `--start-hidden` decides.
+fn starts_in_menu_bar(start_hidden_setting: bool, start_hidden_flag: bool) -> bool {
+    cfg!(target_os = "macos") || start_hidden_setting || start_hidden_flag
+}
+
 #[allow(unused_variables)]
 fn should_force_show_permissions_window(app: &AppHandle) -> bool {
+    // First run on macOS: no model yet, so the window is needed for onboarding.
+    #[cfg(target_os = "macos")]
+    {
+        let model_manager = app.state::<Arc<ModelManager>>();
+        if !model_manager
+            .get_available_models()
+            .iter()
+            .any(|model| model.is_downloaded)
+        {
+            return true;
+        }
+    }
     #[cfg(target_os = "windows")]
     {
         let model_manager = app.state::<Arc<ModelManager>>();
@@ -319,87 +418,31 @@ fn initialize_core_logic(app_handle: &AppHandle) {
                 }
             });
     }
-    #[cfg(not(target_os = "windows"))]
+    // macOS: the menu bar dropdown is a popover panel right under the icon,
+    // opened by left click, right click and Option-click (no native menu).
+    #[cfg(target_os = "macos")]
+    {
+        tray_builder = tray_builder
+            .show_menu_on_left_click(false)
+            .on_tray_icon_event(|tray, event| {
+                use tauri::tray::{MouseButtonState, TrayIconEvent};
+                if let TrayIconEvent::Click {
+                    rect,
+                    button_state: MouseButtonState::Down,
+                    ..
+                } = event
+                {
+                    tray_popover::toggle(tray.app_handle(), rect);
+                }
+            });
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     {
         tray_builder = tray_builder.show_menu_on_left_click(true);
     }
 
     let tray = tray_builder
-        .on_menu_event(|app, event| match event.id.as_ref() {
-            "settings" => {
-                show_main_window(app);
-            }
-            "secure_input_warning" => {
-                // Full explanation lives in the settings-window banner
-                show_main_window(app);
-            }
-            "notice" => {
-                show_main_window(app);
-            }
-            "check_updates" => {
-                let settings = settings::get_settings(app);
-                if settings::update_checks_effectively_enabled(&settings) {
-                    show_main_window(app);
-                    let _ = app.emit("check-for-updates", ());
-                }
-            }
-            "copy_last_transcript" => {
-                tray::copy_last_transcript(app);
-            }
-            "unload_model" => {
-                let transcription_manager = app.state::<Arc<TranscriptionManager>>();
-                if !transcription_manager.is_model_loaded() {
-                    log::warn!("No model is currently loaded.");
-                    return;
-                }
-                if let Err(e) = transcription_manager.ensure_model_unlocked() {
-                    log::warn!("{}", e);
-                    return;
-                }
-                transcription_manager.request_unload();
-                log::info!("Model unloaded via tray.");
-            }
-            "cancel" => {
-                use crate::utils::cancel_current_operation;
-
-                // Use centralized cancellation that handles all operations
-                cancel_current_operation(app);
-            }
-            "quit" => {
-                app.exit(0);
-            }
-            id if id.starts_with("model_select:") => {
-                let model_id = id.strip_prefix("model_select:").unwrap().to_string();
-                let current_model = settings::get_settings(app).selected_model;
-                if model_id == current_model {
-                    return;
-                }
-                let app_clone = app.clone();
-                std::thread::spawn(move || {
-                    match commands::models::switch_active_model(&app_clone, &model_id) {
-                        Ok(()) => {
-                            log::info!("Model switched to {} via tray.", model_id);
-                        }
-                        Err(e) => {
-                            log::error!("Failed to switch model via tray: {}", e);
-                        }
-                    }
-                    tray::update_tray_menu(&app_clone);
-                });
-            }
-            id if id.starts_with("language_select:") => {
-                let language = id.strip_prefix("language_select:").unwrap().to_string();
-                if let Err(e) =
-                    shortcut::change_selected_language_setting(app.clone(), language.clone())
-                {
-                    log::error!("Failed to switch language via tray: {}", e);
-                    return;
-                }
-                log::info!("Language switched to {} via tray.", language);
-                tray::rebuild_tray_menu(app);
-            }
-            _ => {}
-        })
+        .on_menu_event(|app, event| handle_tray_menu_action(app, event.id.as_ref()))
         .build(app_handle)
         .unwrap();
     app_handle.manage(tray);
@@ -436,6 +479,8 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 
     // Create the recording overlay window (hidden by default)
     utils::create_recording_overlay(app_handle);
+    // Guarantees the bubble always clears, even if a code path forgets to.
+    overlay::start_overlay_watchdog(app_handle);
 }
 
 #[tauri::command]
@@ -799,6 +844,9 @@ pub fn run(cli_args: CliArgs) {
             secure_input::run_keyboard_diagnostic,
             trigger_update_check,
             show_main_window_command,
+            tray_popover::tray_popover_state,
+            tray_popover::tray_popover_action,
+            tray_popover::update_app,
             commands::cancel_operation,
             commands::is_portable,
             commands::is_update_checks_locked,
@@ -1174,7 +1222,7 @@ pub fn run(cli_args: CliArgs) {
             // Show main window only if not starting hidden.
             // CLI --start-hidden flag overrides the setting.
             // But if permission onboarding is required, always show the window.
-            let should_hide = settings.start_hidden || cli_args.start_hidden;
+            let should_hide = starts_in_menu_bar(settings.start_hidden, cli_args.start_hidden);
             let should_force_show = should_force_show_permissions_window(&app_handle);
 
             // If start_hidden but tray is disabled, we must show the window
@@ -1250,4 +1298,21 @@ pub fn run(cli_args: CliArgs) {
         // could block quitting behind a hung model load.
         _ => {}
     });
+}
+
+#[cfg(test)]
+mod launch_tests {
+    use super::starts_in_menu_bar;
+
+    #[test]
+    fn start_hidden_flag_or_setting_hides_the_window() {
+        assert!(starts_in_menu_bar(true, false));
+        assert!(starts_in_menu_bar(false, true));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_always_opens_to_the_menu_bar_only() {
+        assert!(starts_in_menu_bar(false, false));
+    }
 }

@@ -175,6 +175,9 @@ const RecordingOverlay: React.FC = () => {
   const [noticeWidth, setNoticeWidth] = useState<number>();
   const noticeProbeRef = useRef<HTMLSpanElement>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  // Bumped on every hide. A show whose settings read is still in flight when a
+  // hide arrives must not turn the bubble back on afterwards (stuck bubble).
+  const hideSeqRef = useRef(0);
 
   const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
   const wavePeakRef = useRef(WAVE_PEAK_FLOOR);
@@ -194,6 +197,7 @@ const RecordingOverlay: React.FC = () => {
 
       const unlistenShow = await listen("show-overlay", async (event) => {
         const overlayState = event.payload as OverlayState;
+        const seqAtShow = hideSeqRef.current;
         clearTimeout(fadeTimerRef.current);
         if (!isNoticeState(overlayState)) setNotice(null);
         // Reset synchronously before settings I/O. A fast microphone can emit
@@ -224,6 +228,7 @@ const RecordingOverlay: React.FC = () => {
         } catch {
           // Keep the previous/default placement if settings can't be read.
         }
+        if (hideSeqRef.current !== seqAtShow) return;
         setState(overlayState);
         if (overlayState === "streaming") {
           setPhase("listening");
@@ -260,6 +265,7 @@ const RecordingOverlay: React.FC = () => {
       );
 
       const unlistenHide = await listen("hide-overlay", () => {
+        hideSeqRef.current += 1;
         setIsVisible(false);
         setChip(null);
         setChipWork(null);
@@ -489,7 +495,13 @@ const RecordingOverlay: React.FC = () => {
     _showCancel?: boolean,
     word: string = t("overlay.chip.prompting"),
   ) => (
-    <div className="sbase sbase-work">
+    <div
+      className="sbase sbase-work"
+      role="button"
+      title="Click to cancel"
+      style={{ cursor: "pointer" }}
+      onClick={() => commands.cancelOperation()}
+    >
       <WorkAnimation kind={kind} label={label} word={word} />
     </div>
   );

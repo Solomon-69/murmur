@@ -594,6 +594,7 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
         // Invalidate any delayed hide still in flight from a previous session
         // (see `hide_recording_overlay`).
         OVERLAY_SHOW_GENERATION.fetch_add(1, Ordering::SeqCst);
+        mark_overlay_shown();
 
         #[cfg(target_os = "linux")]
         let shown_with_layer_shell = if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
@@ -863,6 +864,25 @@ static OVERLAY_SESSION_LIVE: AtomicBool = AtomicBool::new(false);
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     OVERLAY_SESSION_SHOWING.store(false, Ordering::SeqCst);
     OVERLAY_SESSION_LIVE.store(false, Ordering::SeqCst);
+    // Root cause of the "stuck bubble": every show is queued onto the main
+    // thread (`show_overlay_state`), but this hide used to run straight away on
+    // the calling thread. A hide that followed a show closely (a very short
+    // dictation, an early return, a cancel) could therefore run *before* the
+    // queued show: it snapshotted the old generation, then the late show bumped
+    // the generation and displayed the window, and the delayed hide below saw a
+    // "newer session" and skipped itself. Nothing hid the window again. Queue
+    // the hide on the main thread too, so it always lands after any show that
+    // was requested before it.
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || hide_recording_overlay_on_main(&handle));
+}
+
+fn hide_recording_overlay_on_main(app_handle: &AppHandle) {
+    // A show queued after this hide was requested already ran and owns the
+    // window: leave it alone.
+    if OVERLAY_SESSION_SHOWING.load(Ordering::SeqCst) {
+        return;
+    }
     // Always hide the overlay regardless of settings - if setting was changed while recording,
     // we still want to hide it properly
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
@@ -882,6 +902,155 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
             }
             let _ = window_clone.hide();
         });
+    }
+}
+
+/// Hides the overlay right now, with no fade and no generation check. Used by
+/// force-cancel and the watchdog, which must always win.
+pub fn force_hide_recording_overlay(app_handle: &AppHandle) {
+    OVERLAY_SESSION_SHOWING.store(false, Ordering::SeqCst);
+    OVERLAY_SESSION_LIVE.store(false, Ordering::SeqCst);
+    // Invalidate any notice timer or delayed hide still in flight.
+    OVERLAY_SHOW_GENERATION.fetch_add(1, Ordering::SeqCst);
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        if let Some(window) = handle.get_webview_window("recording_overlay") {
+            let _ = window.emit("hide-overlay", ());
+            let _ = window.hide();
+        }
+    });
+}
+
+/// Seconds since the Unix epoch when the overlay last changed state.
+static OVERLAY_LAST_SHOW_SECS: AtomicU64 = AtomicU64::new(0);
+
+/// How often the watchdog looks at the overlay.
+const WATCHDOG_TICK: Duration = Duration::from_secs(2);
+/// A visible overlay with no live session (a notice or a leftover) is hidden
+/// after this long.
+const WATCHDOG_ORPHAN_SECS: u64 = NOTICE_HOLD.as_secs() + 4;
+/// A session that is not recording but has not changed state for this long is
+/// treated as stuck and force-cancelled (transcribing, polishing, prompting).
+pub const WATCHDOG_STUCK_SECS: u64 = 120;
+
+fn now_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+fn mark_overlay_shown() {
+    OVERLAY_LAST_SHOW_SECS.store(now_secs(), Ordering::SeqCst);
+}
+
+/// What the watchdog should do with a visible overlay.
+#[derive(Debug, PartialEq, Eq)]
+pub enum WatchdogAction {
+    Nothing,
+    Hide,
+    ForceCancel,
+}
+
+/// Pure decision used by the watchdog (unit tested).
+pub fn watchdog_decision(
+    visible: bool,
+    session_showing: bool,
+    recording: bool,
+    idle_secs: u64,
+) -> WatchdogAction {
+    if !visible || recording {
+        return WatchdogAction::Nothing;
+    }
+    if !session_showing {
+        if idle_secs >= WATCHDOG_ORPHAN_SECS {
+            return WatchdogAction::Hide;
+        }
+        return WatchdogAction::Nothing;
+    }
+    if idle_secs >= WATCHDOG_STUCK_SECS {
+        return WatchdogAction::ForceCancel;
+    }
+    WatchdogAction::Nothing
+}
+
+/// Starts the background watchdog that guarantees the bubble always clears.
+pub fn start_overlay_watchdog(app_handle: &AppHandle) {
+    let app = app_handle.clone();
+    let _ = std::thread::Builder::new()
+        .name("overlay-watchdog".into())
+        .spawn(move || loop {
+            std::thread::sleep(WATCHDOG_TICK);
+            let Some(window) = app.get_webview_window("recording_overlay") else {
+                continue;
+            };
+            let visible = window.is_visible().unwrap_or(false);
+            let recording = app
+                .try_state::<std::sync::Arc<crate::managers::audio::AudioRecordingManager>>()
+                .is_some_and(|rm| rm.is_recording());
+            let idle = now_secs().saturating_sub(OVERLAY_LAST_SHOW_SECS.load(Ordering::SeqCst));
+            match watchdog_decision(
+                visible,
+                OVERLAY_SESSION_SHOWING.load(Ordering::SeqCst),
+                recording,
+                idle,
+            ) {
+                WatchdogAction::Nothing => {}
+                WatchdogAction::Hide => {
+                    log::warn!("Overlay watchdog: hiding a leftover bubble ({idle}s)");
+                    force_hide_recording_overlay(&app);
+                }
+                WatchdogAction::ForceCancel => {
+                    log::warn!("Overlay watchdog: session stuck for {idle}s, force-cancelling");
+                    crate::utils::cancel_current_operation(&app);
+                    force_hide_recording_overlay(&app);
+                }
+            }
+        });
+}
+
+#[cfg(test)]
+mod watchdog_tests {
+    use super::*;
+
+    #[test]
+    fn hidden_overlay_is_left_alone() {
+        assert_eq!(
+            watchdog_decision(false, true, false, 999),
+            WatchdogAction::Nothing
+        );
+    }
+
+    #[test]
+    fn recording_is_never_interrupted() {
+        assert_eq!(
+            watchdog_decision(true, true, true, 9999),
+            WatchdogAction::Nothing
+        );
+    }
+
+    #[test]
+    fn leftover_bubble_is_hidden() {
+        assert_eq!(
+            watchdog_decision(true, false, false, 2),
+            WatchdogAction::Nothing
+        );
+        assert_eq!(
+            watchdog_decision(true, false, false, WATCHDOG_ORPHAN_SECS),
+            WatchdogAction::Hide
+        );
+    }
+
+    #[test]
+    fn stuck_session_is_cancelled() {
+        assert_eq!(
+            watchdog_decision(true, true, false, 30),
+            WatchdogAction::Nothing
+        );
+        assert_eq!(
+            watchdog_decision(true, true, false, WATCHDOG_STUCK_SECS),
+            WatchdogAction::ForceCancel
+        );
     }
 }
 

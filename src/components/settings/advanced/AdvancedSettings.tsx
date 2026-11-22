@@ -6,6 +6,7 @@ import { StartHidden } from "../StartHidden";
 import { AutostartToggle } from "../AutostartToggle";
 import { ShowTrayIcon } from "../ShowTrayIcon";
 import { ShowInDock } from "../ShowInDock";
+import { UpdateAppButton } from "../UpdateAppButton";
 
 const isMac = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || navigator.userAgent);
 import { PasteMethodSetting } from "../PasteMethod";
@@ -40,6 +41,7 @@ export const AdvancedSettings: React.FC = () => {
         <AutostartToggle descriptionMode="tooltip" grouped={true} />
         <ShowTrayIcon descriptionMode="tooltip" grouped={true} />
         {isMac && <ShowInDock descriptionMode="tooltip" grouped={true} />}
+        <UpdateAppButton grouped={true} />
         <ModelUnloadTimeoutSetting descriptionMode="tooltip" grouped={true} />
         <ExperimentalToggle descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>
