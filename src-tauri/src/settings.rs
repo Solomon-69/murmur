@@ -2097,7 +2097,7 @@ fn os_languages() -> &'static [String] {
 /// Handy's, and installing from it would replace murmur with Handy. So update
 /// checks stay off until murmur publishes its own releases.
 pub fn update_checks_forced_disabled() -> bool {
-    const MURMUR_HAS_UPDATE_FEED: bool = false;
+    const MURMUR_HAS_UPDATE_FEED: bool = true;
     !MURMUR_HAS_UPDATE_FEED || utils::env_flag_enabled("MURMUR_DISABLE_UPDATER")
 }
 
