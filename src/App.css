@@ -353,3 +353,8 @@ input[type="range"] {
   --color-log-surface: #0b0b0d;
   --scrollbar-thumb: rgba(255, 255, 255, 0.18);
 }
+
+@keyframes okpop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

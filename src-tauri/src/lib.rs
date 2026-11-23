@@ -146,6 +146,10 @@ pub(crate) fn handle_tray_menu_action(app: &AppHandle, id: &str) {
         "settings" => {
             show_main_window(app);
         }
+        "model_download" => {
+            // Settings opens on the models list, where a model can be downloaded.
+            show_main_window(app);
+        }
         "secure_input_warning" => {
             // Full explanation lives in the settings-window banner
             show_main_window(app);

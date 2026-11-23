@@ -10,7 +10,8 @@
     "secureInputWarning": "⚠ الاختصارات محجوبة بواسطة Secure Input",
     "language": "اللغة",
     "autoLanguage": "تلقائي",
-    "otherLanguages": "لغات أخرى"
+    "otherLanguages": "لغات أخرى",
+    "downloadModel": "Download a Model..."
   },
   "sidebar": {
     "general": "عام",

@@ -10,7 +10,8 @@
     "secureInputWarning": "⚠ Shortcuts blocked by Secure Input",
     "language": "Language",
     "autoLanguage": "Auto",
-    "otherLanguages": "Other Languages"
+    "otherLanguages": "Other Languages",
+    "downloadModel": "Download a Model..."
   },
   "sidebar": {
     "general": "General",

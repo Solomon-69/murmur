@@ -738,6 +738,12 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
             let item = CheckMenuItem::with_id(app, &item_id, name, true, is_active, None::<&str>)?;
             model_submenu.append(&item)?;
         }
+        // No model on this Mac (never downloaded, or its files were removed): an empty
+        // submenu looked broken, so offer the way to get one instead.
+        if inputs.downloaded_models.is_empty() {
+            let label = if strings.download_model.is_empty() { "Download a Model...".to_string() } else { strings.download_model.clone() };
+            model_submenu.append(&MenuItem::with_id(app, "model_download", &label, true, None::<&str>)?)?;
+        }
 
         let unload_model_i = MenuItem::with_id(
             app,

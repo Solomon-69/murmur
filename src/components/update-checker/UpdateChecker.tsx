@@ -31,6 +31,7 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
   const [isInstalling, setIsInstalling] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showUpToDate, setShowUpToDate] = useState(false);
+  const [checkFailed, setCheckFailed] = useState<string | null>(null);
   const [showPortableUpdateDialog, setShowPortableUpdateDialog] =
     useState(false);
   const [portableInstallerUrl, setPortableInstallerUrl] = useState<string>(
@@ -88,7 +89,14 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
 
     try {
       setIsChecking(true);
+      setCheckFailed(null);
+      const started = Date.now();
       const update = await check();
+      // Keep the spinner up briefly so a fast answer still reads as a real check.
+      const spent = Date.now() - started;
+      if (isManualCheckRef.current && spent < 600) {
+        await new Promise((r) => setTimeout(r, 600 - spent));
+      }
 
       if (update) {
         setUpdateAvailable(true);
@@ -108,11 +116,15 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
           }
           upToDateTimeoutRef.current = setTimeout(() => {
             setShowUpToDate(false);
-          }, 3000);
+          }, 8000);
         }
       }
     } catch (error) {
       console.error("Failed to check for updates:", error);
+      if (isManualCheckRef.current) {
+        setShowUpToDate(false);
+        setCheckFailed(t("footer.checkFailed", "Couldn't check. Try again"));
+      }
     } finally {
       setIsChecking(false);
       isManualCheckRef.current = false;
@@ -168,6 +180,8 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
       await relaunch();
     } catch (error) {
       console.error("Failed to install update:", error);
+      setCheckFailed(t("footer.installFailed", "Update didn't install. Try again"));
+      setUpdateAvailable(false);
     } finally {
       setIsInstalling(false);
       setDownloadProgress(0);
@@ -191,6 +205,7 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
           : t("footer.preparing");
     }
     if (isChecking) return t("footer.checkingUpdates");
+    if (checkFailed) return checkFailed;
     if (showUpToDate) return t("footer.upToDate");
     if (updateAvailable) return t("footer.updateAvailableShort");
     return t("footer.checkForUpdates");
@@ -205,8 +220,9 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
   };
 
   const isUpdateDisabled = !updateChecksEnabled || isChecking || isInstalling;
+  // The green "Up to date" tick stays clickable, so the person can check again.
   const isUpdateClickable =
-    !isUpdateDisabled && (updateAvailable || (!isChecking && !showUpToDate));
+    !isUpdateDisabled && (updateAvailable || !isChecking);
 
   // When no installer could be resolved for this target the button falls back to
   // the releases index, so the dialog has to say "browse" rather than "download".
@@ -255,8 +271,18 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
             onClick={getUpdateStatusAction()}
             disabled={!isUpdateClickable}
             aria-busy={isChecking || isInstalling}
-            className="tabular-nums min-w-[9.5rem]"
+            title={showUpToDate ? t("footer.checkAgain", "Click to check again") : undefined}
+            className={`tabular-nums min-w-[9.5rem] ${
+              showUpToDate && !isChecking
+                ? "!bg-[#33c76b] !text-white !border-transparent animate-[okpop_.45s_cubic-bezier(.34,1.56,.64,1)] motion-reduce:animate-none"
+                : ""
+            }`}
           >
+            {showUpToDate && !isChecking && (
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
             {(isChecking || isInstalling) && (
               <svg
                 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
@@ -289,9 +315,12 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({
             className={`transition-colors disabled:opacity-50 tabular-nums ${
               updateAvailable
                 ? "text-logo-primary hover:text-logo-primary font-medium"
-                : "text-ink-2 hover:text-text"
+                : showUpToDate
+                  ? "text-[#2fb562] font-semibold"
+                  : "text-ink-2 hover:text-text"
             }`}
           >
+            {showUpToDate ? "✓ " : ""}
             {getUpdateStatusText()}
           </button>
         ) : (
