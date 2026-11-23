@@ -16,7 +16,7 @@ pub const POPOVER_HEIGHT: f64 = 330.0;
 /// Corner radius of the glass panel, matching macOS 26 menus.
 const CORNER_RADIUS: f64 = 14.0;
 /// Gap between the bottom of the menu bar icon and the panel.
-const ICON_GAP: f64 = 4.0;
+const ICON_GAP: f64 = 1.0;
 
 /// Where the panel's top-left corner goes, in logical pixels, so the arrow sits
 /// centred right under the icon and the panel stays on screen.
