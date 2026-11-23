@@ -251,6 +251,58 @@ pub async fn update_app(app: AppHandle) -> Result<String, String> {
     app.restart();
 }
 
+/// Automatic update check, so the app updates even when only the menu bar
+/// icon is open (the main window, which used to run the check, may never
+/// open). First check a minute after launch, then every 6 hours. A found
+/// update is downloaded and installed; the app restarts into it only while
+/// no dictation is running, otherwise the new version starts next launch.
+pub fn start_auto_update(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(60));
+        loop {
+            tauri::async_runtime::block_on(auto_update_once(&app));
+            std::thread::sleep(std::time::Duration::from_secs(6 * 60 * 60));
+        }
+    });
+}
+
+async fn auto_update_once(app: &AppHandle) {
+    use tauri_plugin_updater::UpdaterExt;
+    let settings = crate::settings::get_settings(app);
+    if !crate::settings::update_checks_effectively_enabled(&settings) {
+        return;
+    }
+    log::info!("Automatic update check");
+    let update = match app.updater() {
+        Ok(u) => match u.check().await {
+            Ok(Some(update)) => update,
+            Ok(None) => return,
+            Err(e) => {
+                log::warn!("Automatic update check failed: {e}");
+                return;
+            }
+        },
+        Err(e) => {
+            log::warn!("Updater unavailable: {e}");
+            return;
+        }
+    };
+    let version = update.version.clone();
+    log::info!("Installing update {version}");
+    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+        log::warn!("Automatic update {version} failed: {e}");
+        return;
+    }
+    let busy = crate::tray::dictation_in_progress(app) || crate::overlay::is_session_showing();
+    if busy {
+        log::info!("Update {version} installed; starts at next launch");
+    } else {
+        log::info!("Update {version} installed; restarting");
+        app.restart();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
