@@ -1,8 +1,7 @@
 :root {
-  --pv-bg: rgba(246, 246, 248, 0.94);
-  --pv-fg: #1d1d1f;
-  --pv-muted: #6e6e73;
-  --pv-hover: rgba(0, 0, 0, 0.07);
+  --pv-fg: rgba(0, 0, 0, 0.88);
+  --pv-muted: rgba(0, 0, 0, 0.5);
+  --pv-hover: rgba(0, 0, 0, 0.08);
   --pv-line: rgba(0, 0, 0, 0.08);
   --pv-accent: #34c759;
   --pv-off: rgba(120, 120, 128, 0.32);
@@ -10,10 +9,9 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --pv-bg: rgba(40, 40, 44, 0.94);
-    --pv-fg: #f5f5f7;
-    --pv-muted: #a1a1a6;
-    --pv-hover: rgba(255, 255, 255, 0.09);
+    --pv-fg: rgba(255, 255, 255, 0.92);
+    --pv-muted: rgba(255, 255, 255, 0.55);
+    --pv-hover: rgba(255, 255, 255, 0.12);
     --pv-line: rgba(255, 255, 255, 0.1);
     --pv-off: rgba(120, 120, 128, 0.5);
   }
@@ -31,43 +29,18 @@ body {
   user-select: none;
   -webkit-user-select: none;
 }
+/* The glass itself is native (NSGlassEffectView behind this transparent page),
+   so the page draws no background, border or shadow of its own. */
 .pv-stage {
-  position: relative;
-  width: 300px;
-  padding-top: 9px;
-  transform-origin: 50% 0;
+  width: 288px;
   opacity: 0;
-  transform: scale(0.92) translateY(-6px);
-  transition:
-    opacity 140ms ease-out,
-    transform 380ms var(--pv-spring);
+  transition: opacity 120ms ease-out;
 }
 .pv-stage.open {
   opacity: 1;
-  transform: none;
-}
-.pv-arrow {
-  position: absolute;
-  top: 1px;
-  width: 18px;
-  height: 18px;
-  margin-left: -9px;
-  background: var(--pv-bg);
-  transform: rotate(45deg);
-  border-radius: 3px;
-  backdrop-filter: blur(30px);
 }
 .pv-panel {
-  position: relative;
-  margin: 0 6px 8px;
   padding: 6px;
-  border-radius: 12px;
-  background: var(--pv-bg);
-  backdrop-filter: blur(30px) saturate(1.6);
-  -webkit-backdrop-filter: blur(30px) saturate(1.6);
-  box-shadow:
-    0 0 0 0.5px var(--pv-line),
-    0 10px 30px rgba(0, 0, 0, 0.22);
 }
 .pv-head {
   display: flex;
@@ -173,7 +146,6 @@ body {
   transform: translateX(14px);
 }
 @media (prefers-reduced-motion: reduce) {
-  .pv-stage,
   .pv-knob {
     transition: none;
   }

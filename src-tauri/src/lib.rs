@@ -854,6 +854,7 @@ pub fn run(cli_args: CliArgs) {
             show_main_window_command,
             tray_popover::tray_popover_state,
             tray_popover::tray_popover_action,
+            tray_popover::tray_popover_resize,
             tray_popover::update_app,
             commands::cancel_operation,
             commands::is_portable,

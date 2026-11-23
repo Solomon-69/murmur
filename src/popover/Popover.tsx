@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
@@ -54,7 +54,7 @@ export default function Popover() {
   const [state, setState] = useState<PopoverState | null>(null);
   const [dock, setDock] = useState(false);
   const [open, setOpen] = useState(false);
-  const [arrow, setArrow] = useState(150);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [update, setUpdate] = useState<string>("");
 
   const refresh = useCallback(async () => {
@@ -70,8 +70,7 @@ export default function Popover() {
   useEffect(() => {
     refresh();
     const subs = [
-      listen<number>("popover-open", (e) => {
-        setArrow(e.payload);
+      listen<number>("popover-open", () => {
         setOpen(false);
         refresh();
         requestAnimationFrame(() => requestAnimationFrame(() => setOpen(true)));
@@ -106,12 +105,25 @@ export default function Popover() {
     }
   };
 
+  // The window takes the panel's real height, so the glass fits exactly.
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const send = () =>
+      invoke("tray_popover_resize", {
+        height: Math.ceil(el.getBoundingClientRect().height),
+      }).catch(() => {});
+    send();
+    const ro = new ResizeObserver(send);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const busy = state?.busy ?? false;
 
   return (
     <div className={`pv-stage ${open ? "open" : ""}`}>
-      <div className="pv-arrow" style={{ left: `${arrow}px` }} />
-      <div className="pv-panel">
+      <div className="pv-panel" ref={panelRef}>
         <div className="pv-head">
           <span className="pv-title">{L.title}</span>
           <span className="pv-version">{state ? `v${state.version}` : ""}</span>
