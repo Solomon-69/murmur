@@ -1,5 +1,10 @@
 //! Tints the running app's Dock / Cmd-Tab icon to match the Appearance
-//! accent colour. "default" (Grey) keeps the bundled black-and-white icon.
+//! accent colour. "default" (Grey) shows the untinted icon.
+//!
+//! The icon artwork has Apple-Terminal-style lighting baked in (tile edge
+//! light and glyph emboss), so the Dock looks the same whether this runtime
+//! icon or the bundle icon is shown. Only the waveform (from a separate glyph
+//! mask) is tinted; the tile and its edge light are never touched.
 //!
 //! Only the running app's icon changes: the icon Finder shows for the .app
 //! bundle is part of the signed bundle and is never touched.
@@ -7,9 +12,12 @@
 #[cfg(target_os = "macos")]
 use tauri::AppHandle;
 
-/// Greyscale source icon (rounded body on a transparent 512x512 canvas).
+/// Lit source icon (Apple dark tile + white waveform on a transparent 512x512 canvas).
 #[cfg(target_os = "macos")]
 const BASE_ICON_RESOURCE: &str = "resources/app_icon_base.png";
+/// Waveform coverage for the base icon (red channel: 0 = tile, 255 = glyph).
+#[cfg(target_os = "macos")]
+const GLYPH_MASK_RESOURCE: &str = "resources/app_icon_glyph_mask.png";
 
 /// Pixels darker than this (0-255 luminance) are background and stay as is.
 const BG_LUMA_START: f32 = 55.0;
@@ -61,9 +69,17 @@ fn lerp(a: f32, b: f32, t: f32) -> f32 {
 /// the fading bands stay visible (darker bands = deeper accent, the brightest
 /// band = a pale tint).
 pub fn tint_pixel(px: [u8; 4], accent: [u8; 3]) -> [u8; 4] {
-    let [r, g, b, a] = px;
+    let [r, g, b, _] = px;
     let luma = 0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32;
     let weight = ((luma - BG_LUMA_START) / BG_LUMA_RAMP).clamp(0.0, 1.0);
+    tint_pixel_weighted(px, accent, weight)
+}
+
+/// Tints one pixel by an explicit glyph weight (0 = keep, 1 = full tint).
+pub fn tint_pixel_weighted(px: [u8; 4], accent: [u8; 3], weight: f32) -> [u8; 4] {
+    let [r, g, b, a] = px;
+    let luma = 0.2126 * r as f32 + 0.7152 * g as f32 + 0.0722 * b as f32;
+    let weight = weight.clamp(0.0, 1.0);
     if weight <= 0.0 {
         return px;
     }
@@ -89,15 +105,41 @@ pub fn tint_rgba(pixels: &[u8], accent: [u8; 3]) -> Vec<u8> {
         .collect()
 }
 
+/// Tints only the glyph: `mask` is RGBA8 of the same size, red channel = glyph
+/// coverage. Tile pixels (mask 0), including the baked edge light, stay as is.
+pub fn tint_rgba_masked(pixels: &[u8], mask: &[u8], accent: [u8; 3]) -> Vec<u8> {
+    pixels
+        .chunks_exact(4)
+        .zip(mask.chunks_exact(4))
+        .flat_map(|(p, m)| {
+            tint_pixel_weighted([p[0], p[1], p[2], p[3]], accent, m[0] as f32 / 255.0)
+        })
+        .collect()
+}
+
 #[cfg(target_os = "macos")]
-fn tinted_png(path: &std::path::Path, accent: [u8; 3]) -> Result<Vec<u8>, String> {
+fn icon_png(
+    path: &std::path::Path,
+    mask_path: &std::path::Path,
+    accent: Option<[u8; 3]>,
+) -> Result<Vec<u8>, String> {
     let image = tauri::image::Image::from_path(path).map_err(|e| format!("load icon: {e}"))?;
     let (width, height) = (image.width(), image.height());
     let rgba = image.rgba();
     if rgba.len() != (width as usize) * (height as usize) * 4 {
         return Err("icon is not RGBA8".into());
     }
-    let tinted = tint_rgba(rgba, accent);
+    let tinted = match accent {
+        None => rgba.to_vec(),
+        Some(accent) => {
+            let mask = tauri::image::Image::from_path(mask_path)
+                .map_err(|e| format!("load glyph mask: {e}"))?;
+            if mask.width() != width || mask.height() != height || mask.rgba().len() != rgba.len() {
+                return Err("glyph mask size does not match icon".into());
+            }
+            tint_rgba_masked(rgba, mask.rgba(), accent)
+        }
+    };
 
     let mut out = Vec::new();
     {
@@ -147,32 +189,27 @@ fn set_ns_app_icon(png_bytes: Option<&[u8]>) {
     }
 }
 
-/// Applies the accent to the Dock / Cmd-Tab icon. "default" restores the
-/// bundled icon. Safe to call from any thread.
+/// Applies the accent to the Dock / Cmd-Tab icon. Always sets the lit icon
+/// (untinted for "default"), so the Dock never falls back to a differently
+/// rendered bundle icon. Safe to call from any thread.
 #[cfg(target_os = "macos")]
 pub fn apply_dock_icon(app: &AppHandle, accent_id: &str) {
+    use tauri::path::BaseDirectory;
     use tauri::Manager;
 
-    let png = match accent_rgb(accent_id) {
-        None => None,
-        Some(accent) => {
-            let path = match app
-                .path()
-                .resolve(BASE_ICON_RESOURCE, tauri::path::BaseDirectory::Resource)
-            {
-                Ok(p) => p,
-                Err(e) => {
-                    log::warn!("dock icon: cannot resolve base icon: {e}");
-                    return;
-                }
-            };
-            match tinted_png(&path, accent) {
-                Ok(bytes) => Some(bytes),
-                Err(e) => {
-                    log::warn!("dock icon: {e}");
-                    return;
-                }
-            }
+    let resolve = |rel: &str| app.path().resolve(rel, BaseDirectory::Resource);
+    let (path, mask_path) = match (resolve(BASE_ICON_RESOURCE), resolve(GLYPH_MASK_RESOURCE)) {
+        (Ok(p), Ok(m)) => (p, m),
+        (Err(e), _) | (_, Err(e)) => {
+            log::warn!("dock icon: cannot resolve icon resources: {e}");
+            return;
+        }
+    };
+    let png = match icon_png(&path, &mask_path, accent_rgb(accent_id)) {
+        Ok(bytes) => Some(bytes),
+        Err(e) => {
+            log::warn!("dock icon: {e}; falling back to bundle icon");
+            None
         }
     };
     if let Err(e) = app.run_on_main_thread(move || set_ns_app_icon(png.as_deref())) {
@@ -229,6 +266,16 @@ mod tests {
         assert_eq!(out.len(), src.len());
         assert_eq!(&out[..4], &src[..4]);
         assert_ne!(&out[4..], &src[4..]);
+    }
+
+    #[test]
+    fn masked_tint_leaves_lit_tile_edge_alone() {
+        // A bright edge-light pixel on the tile (mask 0) must keep its exact colour.
+        let src = [108, 108, 112, 255, 241, 241, 241, 255];
+        let mask = [0, 0, 0, 255, 255, 255, 255, 255];
+        let out = tint_rgba_masked(&src, &mask, TERRACOTTA);
+        assert_eq!(&out[..4], &src[..4]);
+        assert!(out[4] > out[5] && out[5] > out[6], "glyph not tinted");
     }
 
     #[test]
